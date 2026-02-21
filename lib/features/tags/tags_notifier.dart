@@ -27,6 +27,7 @@ class TagsNotifier extends _$TagsNotifier {
       if (all.length >= page.count || page.next == null) break;
       offset += limit;
     }
+    all.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return all;
   }
 
