@@ -131,6 +131,7 @@ class _TagPickerSheet extends StatefulWidget {
 
 class _TagPickerSheetState extends State<_TagPickerSheet> {
   final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
   late List<String> _filtered;
 
   @override
@@ -138,11 +139,16 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
     super.initState();
     _filtered = widget.tags;
     _searchController.addListener(_onSearch);
+    // Request focus after the first frame so the sheet is fully laid out
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -202,6 +208,7 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _searchController,
+              focusNode: _focusNode,
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Search tags…',
