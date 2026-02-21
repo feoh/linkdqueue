@@ -83,8 +83,7 @@ class _BookmarkFilterBarState extends State<BookmarkFilterBar> {
           ),
           const SizedBox(width: 8),
           // ── tag picker button ─────────────────────────────────────────
-          if (widget.availableTags.isNotEmpty)
-            hasTag
+          hasTag
                 ? InputChip(
                     avatar: const Icon(Icons.label, size: 16),
                     label: Text(
