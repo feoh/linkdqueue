@@ -9,15 +9,15 @@ part of 'bookmark.dart';
 Bookmark _$BookmarkFromJson(Map<String, dynamic> json) => Bookmark(
   id: (json['id'] as num).toInt(),
   url: json['url'] as String,
-  title: json['title'] as String,
+  title: json['title'] as String? ?? '',
   websiteTitle: json['website_title'] as String?,
   websiteDescription: json['website_description'] as String?,
-  description: json['description'] as String,
-  tagNames: (json['tag_names'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  isArchived: json['is_archived'] as bool,
-  isRead: json['is_read'] as bool,
+  description: json['description'] as String? ?? '',
+  tagNames:
+      (json['tag_names'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      [],
+  isArchived: json['is_archived'] as bool? ?? false,
+  isRead: json['is_read'] as bool? ?? false,
   dateAdded: DateTime.parse(json['date_added'] as String),
 );
 

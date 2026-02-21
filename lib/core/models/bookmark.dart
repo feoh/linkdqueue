@@ -6,6 +6,8 @@ part 'bookmark.g.dart';
 class Bookmark {
   final int id;
   final String url;
+
+  @JsonKey(defaultValue: '')
   final String title;
 
   @JsonKey(name: 'website_title')
@@ -14,15 +16,16 @@ class Bookmark {
   @JsonKey(name: 'website_description')
   final String? websiteDescription;
 
+  @JsonKey(defaultValue: '')
   final String description;
 
-  @JsonKey(name: 'tag_names')
+  @JsonKey(name: 'tag_names', defaultValue: [])
   final List<String> tagNames;
 
-  @JsonKey(name: 'is_archived')
+  @JsonKey(name: 'is_archived', defaultValue: false)
   final bool isArchived;
 
-  @JsonKey(name: 'is_read')
+  @JsonKey(name: 'is_read', defaultValue: false)
   final bool isRead;
 
   @JsonKey(name: 'date_added')
