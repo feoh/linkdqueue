@@ -59,9 +59,9 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
   @override
   Widget build(BuildContext context) {
     final notifier = ref.watch(queueNotifierProvider.notifier);
+    final tagsAsync = ref.watch(tagsNotifierProvider);
     final tagsList =
-        ref.watch(tagsNotifierProvider).valueOrNull?.map((t) => t.name).toList() ??
-            [];
+        tagsAsync.valueOrNull?.map((t) => t.name).toList() ?? [];
 
     return Scaffold(
       appBar: AppBar(
@@ -84,6 +84,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
             SliverToBoxAdapter(
               child: BookmarkFilterBar(
                 availableTags: tagsList,
+                tagsLoading: tagsAsync.isLoading,
                 selectedTag: _selectedTag,
                 searchQuery: _searchQuery,
                 onQueryChanged: (q) {

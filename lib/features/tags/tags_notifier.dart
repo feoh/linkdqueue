@@ -10,12 +10,12 @@ part 'tags_notifier.g.dart';
 class TagsNotifier extends _$TagsNotifier {
   @override
   Future<List<Tag>> build() async {
+    final settings = await ref.watch(settingsNotifierProvider.future);
+    if (!settings.isConfigured) return [];
     return _fetchAll();
   }
 
   Future<List<Tag>> _fetchAll() async {
-    final settings = ref.read(settingsNotifierProvider).valueOrNull;
-    if (settings == null || !settings.isConfigured) return [];
     final client = ref.read(apiClientProvider);
     const limit = 100;
     int offset = 0;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class BookmarkFilterBar extends StatefulWidget {
   final List<String> availableTags;
+  final bool tagsLoading;
   final String? selectedTag;
   final String searchQuery;
   final ValueChanged<String> onQueryChanged;
@@ -10,6 +11,7 @@ class BookmarkFilterBar extends StatefulWidget {
   const BookmarkFilterBar({
     super.key,
     required this.availableTags,
+    this.tagsLoading = false,
     this.selectedTag,
     required this.searchQuery,
     required this.onQueryChanged,
@@ -83,28 +85,42 @@ class _BookmarkFilterBarState extends State<BookmarkFilterBar> {
           ),
           const SizedBox(width: 8),
           // ── tag picker button ─────────────────────────────────────────
-          hasTag
-                ? InputChip(
-                    avatar: const Icon(Icons.label, size: 16),
-                    label: Text(
-                      widget.selectedTag!,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onPressed: _openTagPicker,
-                    onDeleted: () => widget.onTagChanged(null),
-                    deleteIconColor:
-                        Theme.of(context).colorScheme.onPrimary,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primary,
-                    labelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  )
-                : IconButton.outlined(
-                    icon: const Icon(Icons.label_outline),
-                    tooltip: 'Filter by tag',
-                    onPressed: _openTagPicker,
+          if (hasTag)
+            InputChip(
+              avatar: const Icon(Icons.label, size: 16),
+              label: Text(
+                widget.selectedTag!,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: _openTagPicker,
+              onDeleted: () => widget.onTagChanged(null),
+              deleteIconColor:
+                  Theme.of(context).colorScheme.onPrimary,
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary,
+              labelStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            )
+          else if (widget.tagsLoading)
+            Tooltip(
+              message: 'Loading tags…',
+              child: SizedBox.square(
+                dimension: 40,
+                child: Center(
+                  child: SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
+                ),
+              ),
+            )
+          else
+            IconButton.outlined(
+              icon: const Icon(Icons.label_outline),
+              tooltip: 'Filter by tag',
+              onPressed: _openTagPicker,
+            ),
         ],
       ),
     );
