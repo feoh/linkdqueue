@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/providers/settings_provider.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_themes.dart';
 
 class LinkdqueueApp extends ConsumerWidget {
   const LinkdqueueApp({super.key});
@@ -10,29 +11,40 @@ class LinkdqueueApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final textScale =
-        ref.watch(settingsNotifierProvider).valueOrNull?.textScale ?? 1.0;
+    final settings = ref.watch(settingsNotifierProvider).valueOrNull;
+    final textScale = settings?.textScale ?? 1.0;
+    final themeOption = settings?.appTheme ?? AppThemeOption.system;
 
-    return MaterialApp.router(
-      title: 'Linkdqueue',
-      routerConfig: router,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF4A90D9),
-        brightness: Brightness.light,
-        useMaterial3: true,
+    final Widget app;
+    if (themeOption == AppThemeOption.system) {
+      app = MaterialApp.router(
+        title: 'Linkdqueue',
+        routerConfig: router,
+        theme: AppThemes.systemLight,
+        darkTheme: AppThemes.systemDark,
+        themeMode: ThemeMode.system,
+        builder: (context, child) => _textScaleWrapper(context, child, textScale),
+      );
+    } else {
+      final themeData = AppThemes.build(themeOption);
+      app = MaterialApp.router(
+        title: 'Linkdqueue',
+        routerConfig: router,
+        theme: themeData,
+        themeMode: ThemeMode.light, // brightness is baked into the ColorScheme
+        builder: (context, child) => _textScaleWrapper(context, child, textScale),
+      );
+    }
+    return app;
+  }
+
+  static Widget _textScaleWrapper(
+      BuildContext context, Widget? child, double scale) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(scale),
       ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF4A90D9),
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(textScale),
-        ),
-        child: child!,
-      ),
+      child: child!,
     );
   }
 }

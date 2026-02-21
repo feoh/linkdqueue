@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/settings_provider.dart';
+import '../../core/theme/app_themes.dart';
 import 'settings_notifier.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -208,6 +209,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 16),
               _FontSizeControl(),
+              const SizedBox(height: 24),
+              Text(
+                'Color theme',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              _ThemePicker(),
               if (isConfigured) ...[
                 const SizedBox(height: 12),
                 TextButton.icon(
@@ -338,6 +346,108 @@ class _FontSizeControl extends ConsumerWidget {
               .toList(),
         ),
       ],
+    );
+  }
+}
+
+class _ThemePicker extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(settingsNotifierProvider).valueOrNull?.appTheme ??
+            AppThemeOption.system;
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: AppThemeOption.values.map((option) {
+        final (primary, surface) = option.swatch;
+        final selected = current == option;
+
+        return GestureDetector(
+          onTap: () =>
+              ref.read(settingsNotifierProvider.notifier).setAppTheme(option),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 90,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outlineVariant,
+                width: selected ? 2.5 : 1,
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.35),
+                        blurRadius: 6,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Colour swatch strip
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(4),
+                            bottomLeft: Radius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 20,
+                        decoration: BoxDecoration(
+                          // secondary accent from the generated scheme
+                          color: AppThemes.build(option)
+                              .colorScheme
+                              .secondary,
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(4),
+                            bottomRight: Radius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  option.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight:
+                        selected ? FontWeight.bold : FontWeight.normal,
+                    color: option.isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                if (selected) ...[
+                  const SizedBox(height: 2),
+                  Icon(Icons.check_circle,
+                      size: 14, color: primary),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
