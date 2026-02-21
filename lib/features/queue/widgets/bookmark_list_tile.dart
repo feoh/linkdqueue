@@ -9,6 +9,8 @@ class BookmarkListTile extends StatelessWidget {
   final VoidCallback? onMarkRead;
   final VoidCallback? onArchive;
   final VoidCallback? onDelete;
+  final ValueChanged<String>? onTagTapped;
+  final String? selectedTag;
 
   const BookmarkListTile({
     super.key,
@@ -16,6 +18,8 @@ class BookmarkListTile extends StatelessWidget {
     this.onMarkRead,
     this.onArchive,
     this.onDelete,
+    this.onTagTapped,
+    this.selectedTag,
   });
 
   Future<void> _openUrl(BuildContext context) async {
@@ -115,13 +119,22 @@ class BookmarkListTile extends StatelessWidget {
                   runSpacing: 4,
                   children: bookmark.tagNames
                       .map(
-                        (tag) => Chip(
+                        (tag) => ActionChip(
                           label: Text(tag),
-                          labelStyle: const TextStyle(fontSize: 11),
+                          labelStyle: TextStyle(
+                            fontSize: 11,
+                            color: tag == selectedTag
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : null,
+                          ),
+                          backgroundColor: tag == selectedTag
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
                           padding: EdgeInsets.zero,
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
+                          onPressed: () => onTagTapped?.call(tag),
                         ),
                       )
                       .toList(),

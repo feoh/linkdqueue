@@ -104,10 +104,17 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
                   children: [
                     BookmarkListTile(
                       bookmark: bookmark,
-                      onMarkRead: () =>
-                          notifier.markRead(bookmark.id),
+                      onMarkRead: () => notifier.markRead(bookmark.id),
                       onArchive: () => notifier.archive(bookmark.id),
                       onDelete: () => _confirmDelete(bookmark.id),
+                      selectedTag: _selectedTag,
+                      onTagTapped: (tag) {
+                        // Tap active tag → clear; tap new tag → filter
+                        setState(() {
+                          _selectedTag = _selectedTag == tag ? null : tag;
+                        });
+                        _applyFilter();
+                      },
                     ),
                     const Divider(height: 1),
                   ],
