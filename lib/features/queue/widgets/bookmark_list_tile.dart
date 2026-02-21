@@ -9,6 +9,7 @@ class BookmarkListTile extends StatelessWidget {
   final VoidCallback? onMarkRead;
   final VoidCallback? onArchive;
   final VoidCallback? onDelete;
+  final VoidCallback? onEditTags;
   final ValueChanged<String>? onTagTapped;
   final String? selectedTag;
 
@@ -18,6 +19,7 @@ class BookmarkListTile extends StatelessWidget {
     this.onMarkRead,
     this.onArchive,
     this.onDelete,
+    this.onEditTags,
     this.onTagTapped,
     this.selectedTag,
   });
@@ -81,65 +83,129 @@ class BookmarkListTile extends StatelessWidget {
       child: InkWell(
         onTap: () => _openUrl(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                bookmark.displayTitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bookmark.displayTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                     ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _hostname(bookmark.url),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-              if (bookmark.displayDescription.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  bookmark.displayDescription,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-              if (bookmark.tagNames.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: bookmark.tagNames
-                      .map(
-                        (tag) => ActionChip(
-                          label: Text(tag),
-                          labelStyle: TextStyle(
-                            fontSize: 11,
-                            color: tag == selectedTag
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : null,
+                    const SizedBox(height: 4),
+                    Text(
+                      _hostname(bookmark.url),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                          backgroundColor: tag == selectedTag
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                          onPressed: () => onTagTapped?.call(tag),
-                        ),
-                      )
-                      .toList(),
+                    ),
+                    if (bookmark.displayDescription.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        bookmark.displayDescription,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                      ),
+                    ],
+                    if (bookmark.tagNames.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: bookmark.tagNames
+                            .map(
+                              (tag) => ActionChip(
+                                label: Text(tag),
+                                labelStyle: TextStyle(
+                                  fontSize: 11,
+                                  color: tag == selectedTag
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary
+                                      : null,
+                                ),
+                                backgroundColor: tag == selectedTag
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => onTagTapped?.call(tag),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
+              ),
+              // ── actions menu ──────────────────────────────────────────
+              PopupMenuButton<_TileAction>(
+                icon: const Icon(Icons.more_vert),
+                tooltip: 'Actions',
+                onSelected: (action) {
+                  switch (action) {
+                    case _TileAction.markRead:
+                      onMarkRead?.call();
+                    case _TileAction.editTags:
+                      onEditTags?.call();
+                    case _TileAction.archive:
+                      onArchive?.call();
+                    case _TileAction.delete:
+                      onDelete?.call();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: _TileAction.markRead,
+                    child: ListTile(
+                      leading: Icon(Icons.done),
+                      title: Text('Mark as read'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _TileAction.editTags,
+                    child: ListTile(
+                      leading: Icon(Icons.label_outline),
+                      title: Text('Edit tags'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: _TileAction.archive,
+                    child: ListTile(
+                      leading: Icon(Icons.archive_outlined),
+                      title: Text('Archive'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _TileAction.delete,
+                    child: ListTile(
+                      leading: Icon(Icons.delete_outline),
+                      title: Text('Delete'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -155,3 +221,5 @@ class BookmarkListTile extends StatelessWidget {
     }
   }
 }
+
+enum _TileAction { markRead, editTags, archive, delete }

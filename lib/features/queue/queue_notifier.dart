@@ -91,6 +91,24 @@ class QueueNotifier extends _$QueueNotifier {
         items.where((b) => b.id != bookmarkId).toList();
   }
 
+  void _updateItem(Bookmark updated) {
+    final items = pagingController.itemList;
+    if (items == null) return;
+    pagingController.itemList =
+        items.map((b) => b.id == updated.id ? updated : b).toList();
+  }
+
+  Future<void> updateTags(int bookmarkId, List<String> tagNames) async {
+    try {
+      final client = ref.read(apiClientProvider);
+      final updated =
+          await client.updateBookmark(bookmarkId, {'tag_names': tagNames});
+      _updateItem(updated);
+    } catch (e) {
+      debugPrint('Error updating tags: $e');
+    }
+  }
+
   Future<void> markRead(int bookmarkId) async {
     try {
       final client = ref.read(apiClientProvider);

@@ -9,6 +9,7 @@ import '../tags/tags_notifier.dart';
 import 'queue_notifier.dart';
 import 'widgets/bookmark_filter_bar.dart';
 import 'widgets/bookmark_list_tile.dart';
+import 'widgets/tag_editor_sheet.dart';
 
 class QueueScreen extends ConsumerStatefulWidget {
   const QueueScreen({super.key});
@@ -28,6 +29,21 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
             tag: _selectedTag,
           ),
         );
+  }
+
+  Future<void> _openTagEditor(
+      Bookmark bookmark, List<String> availableTags) async {
+    final notifier = ref.read(queueNotifierProvider.notifier);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => TagEditorSheet(
+        bookmark: bookmark,
+        availableTags: availableTags,
+        onSave: (newTags) => notifier.updateTags(bookmark.id, newTags),
+      ),
+    );
   }
 
   Future<void> _confirmDelete(int bookmarkId) async {
@@ -108,6 +124,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
                       onMarkRead: () => notifier.markRead(bookmark.id),
                       onArchive: () => notifier.archive(bookmark.id),
                       onDelete: () => _confirmDelete(bookmark.id),
+                      onEditTags: () => _openTagEditor(bookmark, tagsList),
                       selectedTag: _selectedTag,
                       onTagTapped: (tag) {
                         // Tap active tag → clear; tap new tag → filter
