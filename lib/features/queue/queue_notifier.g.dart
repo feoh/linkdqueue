@@ -6,7 +6,7 @@ part of 'queue_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$queueNotifierHash() => r'16ecd3f75f77c6745cbccc246e4d076b6e2aa831';
+String _$queueNotifierHash() => r'5aaf4366909ee5f07f9f89f7603be2a57c34ef02';
 
 /// See also [QueueNotifier].
 @ProviderFor(QueueNotifier)
