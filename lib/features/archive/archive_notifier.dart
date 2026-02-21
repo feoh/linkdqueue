@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/models/bookmark.dart';
 import '../../core/providers/api_client_provider.dart';
+import '../../core/providers/settings_provider.dart';
 
 part 'archive_notifier.g.dart';
 
@@ -26,6 +27,8 @@ class ArchiveNotifier extends _$ArchiveNotifier {
   }
 
   void _fetchPage(int offset) async {
+    final settings = ref.read(settingsNotifierProvider).valueOrNull;
+    if (settings == null || !settings.isConfigured) return;
     try {
       final client = ref.read(apiClientProvider);
       final response = await client.getBookmarks(

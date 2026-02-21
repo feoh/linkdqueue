@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/models/tag.dart';
 import '../../core/providers/api_client_provider.dart';
+import '../../core/providers/settings_provider.dart';
 
 part 'tags_notifier.g.dart';
 
@@ -13,6 +14,8 @@ class TagsNotifier extends _$TagsNotifier {
   }
 
   Future<List<Tag>> _fetchAll() async {
+    final settings = ref.read(settingsNotifierProvider).valueOrNull;
+    if (settings == null || !settings.isConfigured) return [];
     final client = ref.read(apiClientProvider);
     const limit = 100;
     int offset = 0;
