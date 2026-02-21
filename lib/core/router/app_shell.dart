@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../utils/quit.dart';
+
 class AppShell extends StatelessWidget {
   final Widget child;
 
@@ -45,9 +47,20 @@ class AppShell extends StatelessWidget {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: IconButton(
-                      icon: const Icon(Icons.settings_outlined),
-                      onPressed: () => context.go('/settings'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined),
+                          tooltip: 'Settings',
+                          onPressed: () => context.go('/settings'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.exit_to_app),
+                          tooltip: 'Quit  Ctrl+Q',
+                          onPressed: quitApp,
+                        ),
+                      ],
                     ),
                   ),
                 ),

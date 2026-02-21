@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/providers/settings_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_themes.dart';
+import 'core/utils/quit.dart';
 
 class LinkdqueueApp extends ConsumerWidget {
   const LinkdqueueApp({super.key});
@@ -23,7 +25,7 @@ class LinkdqueueApp extends ConsumerWidget {
         theme: AppThemes.systemLight,
         darkTheme: AppThemes.systemDark,
         themeMode: ThemeMode.system,
-        builder: (context, child) => _textScaleWrapper(context, child, textScale),
+        builder: (context, child) => _wrapper(context, child, textScale),
       );
     } else {
       final themeData = AppThemes.build(themeOption);
@@ -31,20 +33,27 @@ class LinkdqueueApp extends ConsumerWidget {
         title: 'Linkdqueue',
         routerConfig: router,
         theme: themeData,
-        themeMode: ThemeMode.light, // brightness is baked into the ColorScheme
-        builder: (context, child) => _textScaleWrapper(context, child, textScale),
+        themeMode: ThemeMode.light,
+        builder: (context, child) => _wrapper(context, child, textScale),
       );
     }
     return app;
   }
 
-  static Widget _textScaleWrapper(
-      BuildContext context, Widget? child, double scale) {
-    return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaler: TextScaler.linear(scale),
+  static Widget _wrapper(BuildContext context, Widget? child, double scale) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyQ, control: true): quitApp,
+      },
+      child: Focus(
+        autofocus: true,
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(scale),
+          ),
+          child: child!,
+        ),
       ),
-      child: child!,
     );
   }
 }
