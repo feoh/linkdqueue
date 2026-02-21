@@ -199,6 +199,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : const Icon(Icons.save_outlined),
                 label: const Text('Save'),
               ),
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 16),
+              Text(
+                'Display',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              _FontSizeControl(),
               if (isConfigured) ...[
                 const SizedBox(height: 12),
                 TextButton.icon(
@@ -239,6 +248,96 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FontSizeControl extends ConsumerWidget {
+  static const _steps = [
+    (scale: 0.85, label: 'XS'),
+    (scale: 1.0,  label: 'S'),
+    (scale: 1.25, label: 'M'),
+    (scale: 1.5,  label: 'L'),
+    (scale: 1.75, label: 'XL'),
+    (scale: 2.0,  label: 'XXL'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(settingsNotifierProvider).valueOrNull?.textScale ?? 1.0;
+
+    // Snap to nearest step index for the slider
+    int nearestIndex = 0;
+    double minDiff = double.infinity;
+    for (var i = 0; i < _steps.length; i++) {
+      final diff = (_steps[i].scale - current).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearestIndex = i;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Text size',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              _steps[nearestIndex].label,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // Live preview sentence
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'The quick brown fox jumps over the lazy dog.',
+            style: Theme.of(context).textTheme.bodyMedium,
+            // textScaler is inherited from MediaQuery, so this previews live
+          ),
+        ),
+        Slider(
+          value: nearestIndex.toDouble(),
+          min: 0,
+          max: (_steps.length - 1).toDouble(),
+          divisions: _steps.length - 1,
+          label: _steps[nearestIndex].label,
+          onChanged: (v) {
+            final idx = v.round();
+            ref
+                .read(settingsNotifierProvider.notifier)
+                .setTextScale(_steps[idx].scale);
+          },
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _steps
+              .map((s) => Text(
+                    s.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ))
+              .toList(),
+        ),
+      ],
     );
   }
 }

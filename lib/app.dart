@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/providers/settings_provider.dart';
 import 'core/router/app_router.dart';
 
 class LinkdqueueApp extends ConsumerWidget {
@@ -9,6 +10,8 @@ class LinkdqueueApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final textScale =
+        ref.watch(settingsNotifierProvider).valueOrNull?.textScale ?? 1.0;
 
     return MaterialApp.router(
       title: 'Linkdqueue',
@@ -24,6 +27,12 @@ class LinkdqueueApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(textScale),
+        ),
+        child: child!,
+      ),
     );
   }
 }
