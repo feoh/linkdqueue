@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,13 +13,38 @@ import 'app_shell.dart';
 
 part 'app_router.g.dart';
 
+/// A [ChangeNotifier] that fires whenever [settingsNotifierProvider] changes.
+/// Used as [GoRouter.refreshListenable] so the router re-runs redirect logic
+/// without being recreated (which would destroy the navigation stack).
+class _SettingsListenable extends ChangeNotifier {
+  final ProviderSubscription<AsyncValue<AppSettings>> _sub;
+
+  _SettingsListenable(Ref ref)
+      : _sub = ref.listen(
+          settingsNotifierProvider,
+          (prev, next) {},
+          fireImmediately: false,
+        ) {
+    ref.listen(settingsNotifierProvider, (prev, next) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _sub.close();
+    super.dispose();
+  }
+}
+
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
-  final settingsAsync = ref.watch(settingsNotifierProvider);
+  final listenable = _SettingsListenable(ref);
+  ref.onDispose(listenable.dispose);
 
   return GoRouter(
     initialLocation: '/queue',
+    refreshListenable: listenable,
     redirect: (context, state) {
+      final settingsAsync = ref.read(settingsNotifierProvider);
       final configured = settingsAsync.when(
         data: (s) => s.isConfigured,
         loading: () => true, // don't redirect while loading
@@ -27,8 +53,10 @@ GoRouter appRouter(Ref ref) {
 
       final onSettings = state.matchedLocation.startsWith('/settings');
       if (!configured && !onSettings) return '/settings';
-      if (configured && onSettings && state.matchedLocation == '/settings' && !settingsAsync.isLoading) {
-        return null; // let user edit settings
+      if (configured && onSettings &&
+          state.matchedLocation == '/settings' &&
+          !settingsAsync.isLoading) {
+        return '/queue';
       }
       return null;
     },

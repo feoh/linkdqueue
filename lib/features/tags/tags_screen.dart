@@ -72,12 +72,9 @@ class TagsScreen extends ConsumerWidget {
               return ListTile(
                 leading: const Icon(Icons.label_outline),
                 title: Text(tag.name),
-                onTap: () {
-                  // Navigate to queue filtered by this tag
-                  context.go('/queue');
-                  // The filter is applied via QueueScreen's filter bar
-                  // For now, navigate to queue with tag query param
-                },
+                onTap: () => context.go(
+                  '/queue?tag=${Uri.encodeComponent(tag.name)}',
+                ),
               );
             },
           );
