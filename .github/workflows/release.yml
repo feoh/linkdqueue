@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Package macOS app
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r "$GITHUB_WORKSPACE/linkdqueue-macos.zip" linkdqueue.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: linkdqueue-macos.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            libsecret-1-dev libjsoncpp-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Package Linux app
+        run: |
+          tar -czvf linkdqueue-linux.tar.gz \
+            -C build/linux/x64/release/bundle .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: linkdqueue-linux.tar.gz
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Package Windows app
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path build/windows/x64/runner/Release/* `
+            -DestinationPath linkdqueue-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: linkdqueue-windows.zip
+
+  release:
+    needs: [build-macos, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/macos/linkdqueue-macos.zip
+            artifacts/linux/linkdqueue-linux.tar.gz
+            artifacts/windows/linkdqueue-windows.zip
+          generate_release_notes: true
