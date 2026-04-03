@@ -21,20 +21,16 @@ class QueueScreen extends ConsumerStatefulWidget {
 class _QueueScreenState extends ConsumerState<QueueScreen> {
   String _searchQuery = '';
   String? _selectedTag;
-  bool _initialFilterApplied = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialFilterApplied) {
-      _initialFilterApplied = true;
-      final routeTag =
-          GoRouterState.of(context).uri.queryParameters['tag'];
-      if (routeTag != null) {
-        _selectedTag = routeTag;
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _applyFilter());
-      }
+    final routeTag =
+        GoRouterState.of(context).uri.queryParameters['tag'];
+    if (routeTag != null && routeTag != _selectedTag) {
+      setState(() => _selectedTag = routeTag);
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _applyFilter());
     }
   }
 
