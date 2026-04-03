@@ -58,3 +58,4 @@ Use **Test Connection** to verify before saving.
 - Edit tags on any bookmark
 - Swipe actions on mobile (mark read, archive)
 - Adjustable text size and colour theme
+- Tags view will show all articles with tag when you click
