@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,13 +48,11 @@ class SettingsNotifier extends _$SettingsNotifier {
   static const _textScaleKey = 'text_scale';
   static const _themeKey = 'app_theme';
 
-  FlutterSecureStorage get _secureStorage => const FlutterSecureStorage();
-
   @override
   FutureOr<AppSettings> build() async {
     final prefs = await SharedPreferences.getInstance();
     final url = prefs.getString(_urlKey);
-    final token = await _secureStorage.read(key: _tokenKey);
+    final token = prefs.getString(_tokenKey);
     final textScale = prefs.getDouble(_textScaleKey) ?? 1.0;
     final themeName = prefs.getString(_themeKey);
     final appTheme = themeName != null
@@ -78,7 +75,7 @@ class SettingsNotifier extends _$SettingsNotifier {
         : baseUrl;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_urlKey, normalized);
-    await _secureStorage.write(key: _tokenKey, value: token);
+    await prefs.setString(_tokenKey, token);
     final current = state.valueOrNull;
     state = AsyncData(AppSettings(
       baseUrl: normalized,
@@ -107,7 +104,7 @@ class SettingsNotifier extends _$SettingsNotifier {
   Future<void> clearSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_urlKey);
-    await _secureStorage.delete(key: _tokenKey);
+    await prefs.remove(_tokenKey);
     final current = state.valueOrNull;
     state = AsyncData(AppSettings(
       textScale: current?.textScale ?? 1.0,

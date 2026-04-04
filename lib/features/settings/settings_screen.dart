@@ -54,6 +54,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             token: _tokenController.text.trim(),
           );
       if (mounted) context.go('/queue');
+    } catch (e) {
+      if (mounted) {
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Save failed'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
