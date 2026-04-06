@@ -53,11 +53,6 @@ GoRouter appRouter(Ref ref) {
 
       final onSettings = state.matchedLocation.startsWith('/settings');
       if (!configured && !onSettings) return '/settings';
-      if (configured && onSettings &&
-          state.matchedLocation == '/settings' &&
-          !settingsAsync.isLoading) {
-        return '/queue';
-      }
       return null;
     },
     routes: [
