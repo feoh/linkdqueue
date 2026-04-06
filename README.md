@@ -1,5 +1,6 @@
 # Linkdqueue
 
+![Linkdqueue Application Main Screen](linkdqueue-main.png)
 A reading queue manager for [Linkding](https://github.com/sissbruecker/linkding) bookmarks. Browse your unread bookmarks, filter by tag, mark articles as read, and manage tags — all from a native desktop or mobile app.
 
 ## Installation
@@ -51,6 +52,7 @@ On first launch you will be prompted for your Linkding connection details:
 Use **Test Connection** to verify before saving.
 
 ## Features
+![Linkdqueue Application Tags Screen](linkdqueue-tags.png)
 
 - Browse your unread bookmark queue with infinite scroll
 - Filter by tag or free-text search
