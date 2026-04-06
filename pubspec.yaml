@@ -2,7 +2,7 @@ name: linkdqueue
 description: "A reading queue manager for Linkding bookmarks."
 publish_to: 'none'
 
-version: 1.1.4+1
+version: 1.1.5+1
 
 environment:
   sdk: ^3.11.0
