@@ -27,10 +27,9 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     super.didChangeDependencies();
     final routeTag =
         GoRouterState.of(context).uri.queryParameters['tag'];
-    if (routeTag != null && routeTag != _selectedTag) {
-      setState(() => _selectedTag = routeTag);
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _applyFilter());
+    if (routeTag != _selectedTag) {
+      _selectedTag = routeTag;
+      _applyFilter();
     }
   }
 

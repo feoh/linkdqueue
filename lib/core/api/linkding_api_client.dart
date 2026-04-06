@@ -41,11 +41,17 @@ class LinkdingApiClient {
     int limit = 20,
     int offset = 0,
   }) async {
+    // Linkding uses the `q` parameter with `#tagname` syntax for tag filtering.
+    final parts = <String>[
+      if (query != null && query.isNotEmpty) query,
+      if (tag != null && tag.isNotEmpty) '#$tag',
+    ];
+    final q = parts.join(' ').trim();
+
     final response = await _dio.get(
       'api/bookmarks/',
       queryParameters: {
-        if (query != null && query.isNotEmpty) 'q': query,
-        if (tag != null && tag.isNotEmpty) 'tag': tag,
+        if (q.isNotEmpty) 'q': q,
         if (isArchived != null) 'is_archived': isArchived ? 1 : 0,
         if (isRead != null) 'is_read': isRead ? 1 : 0,
         'limit': limit,

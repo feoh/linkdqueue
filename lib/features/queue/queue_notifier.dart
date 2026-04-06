@@ -44,18 +44,23 @@ class QueueNotifier extends _$QueueNotifier {
   }
 
   void _fetchPage(int offset) async {
-    final settings = ref.read(settingsNotifierProvider).valueOrNull;
-    if (settings == null || !settings.isConfigured) return;
+    // Await settings — on startup they may still be loading from storage.
+    final settings = await ref.read(settingsNotifierProvider.future);
+    if (!settings.isConfigured) return;
+    final filterAtStart = _filter;
     try {
       final client = ref.read(apiClientProvider);
       final response = await client.getBookmarks(
-        query: _filter.query.isNotEmpty ? _filter.query : null,
-        tag: _filter.tag,
+        query: filterAtStart.query.isNotEmpty ? filterAtStart.query : null,
+        tag: filterAtStart.tag,
         isArchived: false,
         isRead: false,
         limit: _pageSize,
         offset: offset,
       );
+
+      // Discard stale response if the filter changed while awaiting.
+      if (_filter != filterAtStart) return;
 
       final isLast = offset + response.results.length >= response.count;
       if (isLast) {
@@ -67,10 +72,12 @@ class QueueNotifier extends _$QueueNotifier {
         );
       }
     } on DioException catch (e) {
+      if (_filter != filterAtStart) return;
       pagingController.error = e.error is ApiException
           ? e.error
           : UnknownException(e.message ?? 'Unknown error');
     } catch (e) {
+      if (_filter != filterAtStart) return;
       pagingController.error = UnknownException(e.toString());
     }
   }
