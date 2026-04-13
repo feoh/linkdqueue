@@ -12,7 +12,9 @@ import 'widgets/bookmark_list_tile.dart';
 import 'widgets/tag_editor_sheet.dart';
 
 class QueueScreen extends ConsumerStatefulWidget {
-  const QueueScreen({super.key});
+  const QueueScreen({super.key, this.initialTag});
+
+  final String? initialTag;
 
   @override
   ConsumerState<QueueScreen> createState() => _QueueScreenState();
@@ -23,13 +25,32 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
   String? _selectedTag;
 
   @override
+  void initState() {
+    super.initState();
+    // Set the filter BEFORE the first build so the PagedSliverList fires its
+    // first page request with the correct tag already in place.
+    _selectedTag = widget.initialTag;
+    if (_selectedTag != null) {
+      ref.read(queueNotifierProvider.notifier).setInitialFilter(
+            QueueFilter(tag: _selectedTag),
+          );
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final routeTag =
-        GoRouterState.of(context).uri.queryParameters['tag'];
+    // Only handle tag changes that occur while this screen is already live
+    // (e.g. navigating from /queue?tag=a to /queue?tag=b).  The initial tag
+    // is handled above in initState, so _selectedTag already matches and this
+    // branch is skipped on first entry.
+    final routeTag = GoRouterState.of(context).uri.queryParameters['tag'];
     if (routeTag != _selectedTag) {
       _selectedTag = routeTag;
-      _applyFilter();
+      // Defer until after the frame to avoid modifying a provider mid-build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyFilter();
+      });
     }
   }
 

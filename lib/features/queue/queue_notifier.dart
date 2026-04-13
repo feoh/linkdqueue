@@ -82,6 +82,13 @@ class QueueNotifier extends _$QueueNotifier {
     }
   }
 
+  /// Set the filter before the first page fetch without triggering a refresh.
+  /// Call this from initState so the correct filter is in place when the
+  /// PagedSliverList first fires its page request.
+  void setInitialFilter(QueueFilter filter) {
+    _filter = filter;
+  }
+
   void applyFilter(QueueFilter filter) {
     if (_filter == filter) return;
     _filter = filter;
