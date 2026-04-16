@@ -64,19 +64,47 @@ flutter devices                        # list available devices
 flutter run -d "iPhone 16"             # example: run on a named simulator
 ```
 
-### Install on a Physical Device
+### Install on a Physical Device with an Apple Developer Account
 
-1. Connect your iPhone via USB.
-2. Open `ios/Runner.xcworkspace` in Xcode.
-3. Under **Signing & Capabilities**, select your Apple Developer team and set a unique **Bundle Identifier** (e.g. `com.yourname.linkdqueue`).
-4. Trust the developer certificate on the device: **Settings → General → VPN & Device Management**.
-5. Run from Flutter:
+You need an [Apple Developer account](https://developer.apple.com/programs/) (free or paid) to install on a real device.
+
+#### Step 1 — Configure signing in Xcode
+
+1. Open `ios/Runner.xcworkspace` in Xcode (not `Runner.xcodeproj`).
+2. In the Project navigator, select **Runner** → **Runner** target → **Signing & Capabilities** tab.
+3. Tick **Automatically manage signing**.
+4. Choose your **Team** from the drop-down (sign in with your Apple ID under **Xcode → Settings → Accounts** if your team is not listed yet).
+5. Set a unique **Bundle Identifier** — something like `com.yourname.linkdqueue`. It must be globally unique.
+
+> **Free vs. paid account:** A free Apple ID lets you sideload onto up to 3 devices, but the certificate expires after 7 days (you must rebuild and reinstall weekly). A paid membership ($99/year) gives 90-day certificates and lets you distribute via TestFlight or the App Store.
+
+#### Step 2 — Trust the developer certificate on your iPhone
+
+The first time you install from a new developer account, iOS will block the app until you explicitly trust it:
+
+1. On your iPhone, open **Settings → General → VPN & Device Management**.
+2. Under **Developer App**, tap your Apple ID email address.
+3. Tap **Trust "[your Apple ID]"** and confirm.
+
+You only need to do this once per developer account per device.
+
+#### Step 3 — Build and install
+
+Connect your iPhone via USB, unlock it, and tap **Trust** on the "Trust This Computer?" prompt if it appears.
 
 ```bash
-flutter run -d <your-device-id>
+flutter devices          # confirm your iPhone is listed
+flutter run -d <device-id>
 ```
 
-Or build a debug IPA and install via Xcode's Devices & Simulators window.
+Flutter will build, sign, and install the app in one step.
+
+Alternatively, build a release IPA in Xcode:
+
+1. Select your connected iPhone as the run destination in the Xcode toolbar.
+2. Choose **Product → Archive**.
+3. In the Organizer window that opens, select the archive and click **Distribute App → Direct Distribution**.
+4. Xcode signs and exports an IPA you can drag onto your device in the **Devices & Simulators** window (**Window → Devices and Simulators**).
 
 ### Build a Release IPA
 
