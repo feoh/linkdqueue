@@ -92,19 +92,47 @@ You only need to do this once per developer account per device.
 
 Connect your iPhone via USB, unlock it, and tap **Trust** on the "Trust This Computer?" prompt if it appears.
 
+**Quickest option — build and install in one command:**
+
 ```bash
 flutter devices          # confirm your iPhone is listed
-flutter run -d <device-id>
+flutter run --release -d <device-id>
 ```
 
-Flutter will build, sign, and install the app in one step.
+Flutter builds, signs with your development certificate, and installs directly.
 
-Alternatively, build a release IPA in Xcode:
+**IPA option — for sharing or keeping a build artifact:**
+
+```bash
+flutter build ipa --export-method development
+```
+
+> **Important:** Do not use `--export-method app-store`. That requires a paid Apple Developer membership ($99/year) and is only needed for App Store or TestFlight distribution. For personal sideloading, `development` is always the right choice.
+
+This produces an IPA at `build/ios/ipa/linkdqueue.ipa`. Install it by:
+
+1. Opening **Xcode → Window → Devices and Simulators**.
+2. Selecting your iPhone in the left sidebar.
+3. Clicking the **+** button under **Installed Apps** and choosing the IPA file.
+
+**Alternatively, use Xcode directly:**
 
 1. Select your connected iPhone as the run destination in the Xcode toolbar.
 2. Choose **Product → Archive**.
-3. In the Organizer window that opens, select the archive and click **Distribute App → Direct Distribution**.
-4. Xcode signs and exports an IPA you can drag onto your device in the **Devices & Simulators** window (**Window → Devices and Simulators**).
+3. In the Organizer window, select the archive and click **Distribute App**.
+4. Choose **Development** (not App Store Connect) and follow the prompts.
+5. Drag the exported IPA onto your device in the **Devices & Simulators** window.
+
+#### App icon and launch image warnings
+
+You may see warnings like:
+
+```
+App icon is set to the default placeholder icon.
+Launch image is set to the default placeholder icon.
+```
+
+These are cosmetic reminders to replace Flutter's default assets before any public release. They will not block a development build or prevent installation on your own device.
 
 ### Build a Release IPA
 
