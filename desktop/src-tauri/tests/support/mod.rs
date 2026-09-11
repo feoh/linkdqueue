@@ -29,8 +29,7 @@ impl FakeKeyring {
         if self.failure == Some(Failure::Write) {
             return Err(Failure::Write);
         }
-        self.entries
-            .insert(reference.to_owned(), value.to_owned());
+        self.entries.insert(reference.to_owned(), value.to_owned());
         Ok(())
     }
 
@@ -56,10 +55,8 @@ pub struct TempPrefs {
 
 impl TempPrefs {
     pub fn new() -> Self {
-        let path = std::env::temp_dir().join(format!(
-            "linkdqueue-desktop-test-{}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("linkdqueue-desktop-test-{}", std::process::id()));
         fs::create_dir_all(&path).expect("create isolated temporary preferences");
         Self { path }
     }

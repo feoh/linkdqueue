@@ -10,8 +10,11 @@ use support::{Failure, FakeKeyring, MockHttpServer, TempPrefs};
 fn fake_keyring_and_preferences_are_isolated() {
     let prefs = TempPrefs::new();
     let path = prefs.path().join("preferences.json");
-    fs::write(&path, br#"{"schemaVersion":1,"connectionState":"disconnected"}"#)
-        .expect("write test preferences");
+    fs::write(
+        &path,
+        br#"{"schemaVersion":1,"connectionState":"disconnected"}"#,
+    )
+    .expect("write test preferences");
 
     let mut keyring = FakeKeyring::default();
     keyring

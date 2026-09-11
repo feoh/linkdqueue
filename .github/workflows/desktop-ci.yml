@@ -1,0 +1,104 @@
+---
+name: Desktop CI
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate desktop workspace
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Linux WebKit prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            librsvg2-dev \
+            patchelf \
+            wget
+        working-directory: .
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            desktop/src-tauri/target
+          key: >-
+            desktop-cargo-${{ runner.os }}-rust-1.92.0-${{
+            hashFiles('desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            desktop-cargo-${{ runner.os }}-rust-1.92.0-
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Type-check Svelte
+        run: npm run check
+
+      - name: Run frontend unit tests
+        run: npm run test:unit
+
+      - name: Check serialized contracts
+        run: npm run test:contracts
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Check Rust formatting
+        run: >-
+          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
+      - name: Lint Rust
+        run: |
+          cargo clippy \
+            --manifest-path src-tauri/Cargo.toml \
+            --all-targets -- -D warnings
+
+      - name: Run Rust tests
+        run: >-
+          cargo test --manifest-path src-tauri/Cargo.toml
