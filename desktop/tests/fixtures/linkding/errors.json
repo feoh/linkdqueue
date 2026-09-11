@@ -1,0 +1,49 @@
+{
+  "401_invalid_token": {
+    "status": 401,
+    "body": {
+      "detail": "Invalid token."
+    }
+  },
+  "401_missing_credentials": {
+    "status": 401,
+    "body": {
+      "detail": "Authentication credentials were not provided."
+    }
+  },
+  "403": {
+    "status": 403,
+    "body": {
+      "detail": "Permission denied."
+    },
+    "note": "Deployment/session-auth or proxy policy; not expected for token-authenticated owner API calls."
+  },
+  "404": {
+    "status": 404,
+    "body": {
+      "detail": "Not found."
+    }
+  },
+  "400": {
+    "status": 400,
+    "body": {
+      "url": [
+        "This field is required."
+      ]
+    }
+  },
+  "429": {
+    "status": 429,
+    "body": {
+      "detail": "Request was throttled."
+    },
+    "note": "Not emitted by upstream default REST_FRAMEWORK settings; proxy/deployment fixture."
+  },
+  "500": {
+    "status": 500,
+    "body": {
+      "detail": "Internal server error."
+    },
+    "note": "Body is deployment-dependent; fixture is a sanitized transport example."
+  }
+}

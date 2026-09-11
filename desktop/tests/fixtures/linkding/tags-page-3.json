@@ -1,0 +1,32 @@
+{
+  "count": 205,
+  "next": null,
+  "previous": "https://linkding.invalid/api/tags/?limit=100&offset=100",
+  "results": [
+    {
+      "id": 201,
+      "name": "fixture-tag-201",
+      "date_added": "2026-03-01T12:00:00Z"
+    },
+    {
+      "id": 202,
+      "name": "fixture-tag-202",
+      "date_added": "2026-03-02T12:00:00Z"
+    },
+    {
+      "id": 203,
+      "name": "fixture-tag-203",
+      "date_added": "2026-03-03T12:00:00Z"
+    },
+    {
+      "id": 204,
+      "name": "fixture-tag-204",
+      "date_added": "2026-03-04T12:00:00Z"
+    },
+    {
+      "id": 205,
+      "name": "fixture-tag-205",
+      "date_added": "2026-03-05T12:00:00Z"
+    }
+  ]
+}

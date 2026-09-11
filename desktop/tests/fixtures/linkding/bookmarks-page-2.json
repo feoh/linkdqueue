@@ -1,0 +1,407 @@
+{
+  "count": 45,
+  "next": "https://linkding.invalid/api/bookmarks/?limit=20&offset=40",
+  "previous": "https://linkding.invalid/api/bookmarks/?limit=20&offset=0",
+  "results": [
+    {
+      "id": 21,
+      "url": "https://bookmark-021.invalid/articles/21",
+      "title": "Fixture bookmark 021",
+      "description": "Synthetic description for bookmark 021.",
+      "notes": "Note 021",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-021",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-02"
+      ],
+      "date_added": "2026-01-21T12:00:00Z",
+      "date_modified": "2026-02-21T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 22,
+      "url": "https://bookmark-022.invalid/articles/22",
+      "title": "Fixture bookmark 022",
+      "description": "Synthetic description for bookmark 022.",
+      "notes": "Note 022",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-022",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-03"
+      ],
+      "date_added": "2026-01-22T12:00:00Z",
+      "date_modified": "2026-02-22T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 23,
+      "url": "https://bookmark-023.invalid/articles/23",
+      "title": "Fixture bookmark 023",
+      "description": "Synthetic description for bookmark 023.",
+      "notes": "Note 023",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-023",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-04"
+      ],
+      "date_added": "2026-01-23T12:00:00Z",
+      "date_modified": "2026-02-23T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 24,
+      "url": "https://bookmark-024.invalid/articles/24",
+      "title": "Fixture bookmark 024",
+      "description": "Synthetic description for bookmark 024.",
+      "notes": "Note 024",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-024",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-05"
+      ],
+      "date_added": "2026-01-24T12:00:00Z",
+      "date_modified": "2026-02-24T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 25,
+      "url": "https://bookmark-025.invalid/articles/25",
+      "title": "Fixture bookmark 025",
+      "description": "Synthetic description for bookmark 025.",
+      "notes": "Note 025",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-025",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-01"
+      ],
+      "date_added": "2026-01-25T12:00:00Z",
+      "date_modified": "2026-02-25T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 26,
+      "url": "https://bookmark-026.invalid/articles/26",
+      "title": "Fixture bookmark 026",
+      "description": "Synthetic description for bookmark 026.",
+      "notes": "Note 026",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-026",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-02"
+      ],
+      "date_added": "2026-01-26T12:00:00Z",
+      "date_modified": "2026-02-26T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 27,
+      "url": "https://bookmark-027.invalid/articles/27",
+      "title": "Fixture bookmark 027",
+      "description": "Synthetic description for bookmark 027.",
+      "notes": "Note 027",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-027",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-03"
+      ],
+      "date_added": "2026-01-27T12:00:00Z",
+      "date_modified": "2026-02-27T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 28,
+      "url": "https://bookmark-028.invalid/articles/28",
+      "title": "Fixture bookmark 028",
+      "description": "Synthetic description for bookmark 028.",
+      "notes": "Note 028",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-028",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-04"
+      ],
+      "date_added": "2026-01-28T12:00:00Z",
+      "date_modified": "2026-02-28T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 29,
+      "url": "https://bookmark-029.invalid/articles/29",
+      "title": "Fixture bookmark 029",
+      "description": "Synthetic description for bookmark 029.",
+      "notes": "Note 029",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-029",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-05"
+      ],
+      "date_added": "2026-01-01T12:00:00Z",
+      "date_modified": "2026-02-01T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 30,
+      "url": "https://bookmark-030.invalid/articles/30",
+      "title": "Fixture bookmark 030",
+      "description": "Synthetic description for bookmark 030.",
+      "notes": "Note 030",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-030",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-01"
+      ],
+      "date_added": "2026-01-02T12:00:00Z",
+      "date_modified": "2026-02-02T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 31,
+      "url": "https://bookmark-031.invalid/articles/31",
+      "title": "Fixture bookmark 031",
+      "description": "Synthetic description for bookmark 031.",
+      "notes": "Note 031",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-031",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-02"
+      ],
+      "date_added": "2026-01-03T12:00:00Z",
+      "date_modified": "2026-02-03T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 32,
+      "url": "https://bookmark-032.invalid/articles/32",
+      "title": "Fixture bookmark 032",
+      "description": "Synthetic description for bookmark 032.",
+      "notes": "Note 032",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-032",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-03"
+      ],
+      "date_added": "2026-01-04T12:00:00Z",
+      "date_modified": "2026-02-04T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 33,
+      "url": "https://bookmark-033.invalid/articles/33",
+      "title": "Fixture bookmark 033",
+      "description": "Synthetic description for bookmark 033.",
+      "notes": "Note 033",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-033",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-04"
+      ],
+      "date_added": "2026-01-05T12:00:00Z",
+      "date_modified": "2026-02-05T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 34,
+      "url": "https://bookmark-034.invalid/articles/34",
+      "title": "Fixture bookmark 034",
+      "description": "Synthetic description for bookmark 034.",
+      "notes": "Note 034",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-034",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-05"
+      ],
+      "date_added": "2026-01-06T12:00:00Z",
+      "date_modified": "2026-02-06T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 35,
+      "url": "https://bookmark-035.invalid/articles/35",
+      "title": "Fixture bookmark 035",
+      "description": "Synthetic description for bookmark 035.",
+      "notes": "Note 035",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-035",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-01"
+      ],
+      "date_added": "2026-01-07T12:00:00Z",
+      "date_modified": "2026-02-07T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 36,
+      "url": "https://bookmark-036.invalid/articles/36",
+      "title": "Fixture bookmark 036",
+      "description": "Synthetic description for bookmark 036.",
+      "notes": "Note 036",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-036",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-02"
+      ],
+      "date_added": "2026-01-08T12:00:00Z",
+      "date_modified": "2026-02-08T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 37,
+      "url": "https://bookmark-037.invalid/articles/37",
+      "title": "Fixture bookmark 037",
+      "description": "Synthetic description for bookmark 037.",
+      "notes": "Note 037",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-037",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-03"
+      ],
+      "date_added": "2026-01-09T12:00:00Z",
+      "date_modified": "2026-02-09T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 38,
+      "url": "https://bookmark-038.invalid/articles/38",
+      "title": "Fixture bookmark 038",
+      "description": "Synthetic description for bookmark 038.",
+      "notes": "Note 038",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-038",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-04"
+      ],
+      "date_added": "2026-01-10T12:00:00Z",
+      "date_modified": "2026-02-10T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 39,
+      "url": "https://bookmark-039.invalid/articles/39",
+      "title": "Fixture bookmark 039",
+      "description": "Synthetic description for bookmark 039.",
+      "notes": "Note 039",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-039",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-05"
+      ],
+      "date_added": "2026-01-11T12:00:00Z",
+      "date_modified": "2026-02-11T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 40,
+      "url": "https://bookmark-040.invalid/articles/40",
+      "title": "Fixture bookmark 040",
+      "description": "Synthetic description for bookmark 040.",
+      "notes": "Note 040",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-040",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-01"
+      ],
+      "date_added": "2026-01-12T12:00:00Z",
+      "date_modified": "2026-02-12T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    }
+  ]
+}

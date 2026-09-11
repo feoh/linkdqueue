@@ -1,0 +1,107 @@
+{
+  "count": 45,
+  "next": null,
+  "previous": "https://linkding.invalid/api/bookmarks/?limit=20&offset=20",
+  "results": [
+    {
+      "id": 41,
+      "url": "https://bookmark-041.invalid/articles/41",
+      "title": "Fixture bookmark 041",
+      "description": "Synthetic description for bookmark 041.",
+      "notes": "Note 041",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-041",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-02"
+      ],
+      "date_added": "2026-01-13T12:00:00Z",
+      "date_modified": "2026-02-13T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 42,
+      "url": "https://bookmark-042.invalid/articles/42",
+      "title": "Fixture bookmark 042",
+      "description": "Synthetic description for bookmark 042.",
+      "notes": "Note 042",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-042",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-03"
+      ],
+      "date_added": "2026-01-14T12:00:00Z",
+      "date_modified": "2026-02-14T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 43,
+      "url": "https://bookmark-043.invalid/articles/43",
+      "title": "Fixture bookmark 043",
+      "description": "Synthetic description for bookmark 043.",
+      "notes": "Note 043",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-043",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-04"
+      ],
+      "date_added": "2026-01-15T12:00:00Z",
+      "date_modified": "2026-02-15T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 44,
+      "url": "https://bookmark-044.invalid/articles/44",
+      "title": "Fixture bookmark 044",
+      "description": "Synthetic description for bookmark 044.",
+      "notes": "Note 044",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-044",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-05"
+      ],
+      "date_added": "2026-01-16T12:00:00Z",
+      "date_modified": "2026-02-16T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    },
+    {
+      "id": 45,
+      "url": "https://bookmark-045.invalid/articles/45",
+      "title": "Fixture bookmark 045",
+      "description": "Synthetic description for bookmark 045.",
+      "notes": "Note 045",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-045",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [
+        "fixture-01"
+      ],
+      "date_added": "2026-01-17T12:00:00Z",
+      "date_modified": "2026-02-17T12:00:00Z",
+      "website_title": null,
+      "website_description": null
+    }
+  ]
+}

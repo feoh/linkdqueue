@@ -1,0 +1,18 @@
+{
+  "theme": "auto",
+  "bookmark_date_display": "relative",
+  "bookmark_link_target": "_blank",
+  "web_archive_integration": "enabled",
+  "tag_search": "lax",
+  "enable_sharing": false,
+  "enable_public_sharing": false,
+  "enable_favicons": false,
+  "display_url": true,
+  "permanent_notes": false,
+  "search_preferences": {
+    "sort": "added_desc",
+    "shared": "off",
+    "unread": "off"
+  },
+  "version": "1.46.2"
+}

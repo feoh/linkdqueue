@@ -1,0 +1,25 @@
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 46,
+      "url": "https://bookmark-046.invalid/articles/46",
+      "title": "",
+      "description": "",
+      "notes": "",
+      "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-046",
+      "favicon_url": null,
+      "preview_image_url": null,
+      "is_archived": false,
+      "unread": true,
+      "shared": false,
+      "tag_names": [],
+      "date_added": "2026-01-18T12:00:00Z",
+      "date_modified": null,
+      "website_title": null,
+      "website_description": null
+    }
+  ]
+}

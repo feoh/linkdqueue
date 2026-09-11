@@ -1,0 +1,20 @@
+{
+  "id": 1,
+  "url": "https://bookmark-001.invalid/articles/1",
+  "title": "Fixture bookmark 001",
+  "description": "Synthetic description for bookmark 001.",
+  "notes": "Note 001",
+  "web_archive_snapshot_url": "https://archive.invalid/fixture/bookmark-001",
+  "favicon_url": null,
+  "preview_image_url": null,
+  "is_archived": false,
+  "unread": true,
+  "shared": false,
+  "tag_names": [
+    "fixture-02"
+  ],
+  "date_added": "2026-01-01T12:00:00Z",
+  "date_modified": "2026-02-01T12:00:00Z",
+  "website_title": null,
+  "website_description": null
+}

@@ -1,0 +1,507 @@
+{
+  "count": 205,
+  "next": "https://linkding.invalid/api/tags/?limit=100&offset=100",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "fixture-tag-001",
+      "date_added": "2026-01-01T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "fixture-tag-002",
+      "date_added": "2026-01-02T12:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "fixture-tag-003",
+      "date_added": "2026-01-03T12:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "fixture-tag-004",
+      "date_added": "2026-01-04T12:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "fixture-tag-005",
+      "date_added": "2026-01-05T12:00:00Z"
+    },
+    {
+      "id": 6,
+      "name": "fixture-tag-006",
+      "date_added": "2026-01-06T12:00:00Z"
+    },
+    {
+      "id": 7,
+      "name": "fixture-tag-007",
+      "date_added": "2026-01-07T12:00:00Z"
+    },
+    {
+      "id": 8,
+      "name": "fixture-tag-008",
+      "date_added": "2026-01-08T12:00:00Z"
+    },
+    {
+      "id": 9,
+      "name": "fixture-tag-009",
+      "date_added": "2026-01-09T12:00:00Z"
+    },
+    {
+      "id": 10,
+      "name": "fixture-tag-010",
+      "date_added": "2026-01-10T12:00:00Z"
+    },
+    {
+      "id": 11,
+      "name": "fixture-tag-011",
+      "date_added": "2026-01-11T12:00:00Z"
+    },
+    {
+      "id": 12,
+      "name": "fixture-tag-012",
+      "date_added": "2026-01-12T12:00:00Z"
+    },
+    {
+      "id": 13,
+      "name": "fixture-tag-013",
+      "date_added": "2026-01-13T12:00:00Z"
+    },
+    {
+      "id": 14,
+      "name": "fixture-tag-014",
+      "date_added": "2026-01-14T12:00:00Z"
+    },
+    {
+      "id": 15,
+      "name": "fixture-tag-015",
+      "date_added": "2026-01-15T12:00:00Z"
+    },
+    {
+      "id": 16,
+      "name": "fixture-tag-016",
+      "date_added": "2026-01-16T12:00:00Z"
+    },
+    {
+      "id": 17,
+      "name": "fixture-tag-017",
+      "date_added": "2026-01-17T12:00:00Z"
+    },
+    {
+      "id": 18,
+      "name": "fixture-tag-018",
+      "date_added": "2026-01-18T12:00:00Z"
+    },
+    {
+      "id": 19,
+      "name": "fixture-tag-019",
+      "date_added": "2026-01-19T12:00:00Z"
+    },
+    {
+      "id": 20,
+      "name": "fixture-tag-020",
+      "date_added": "2026-01-20T12:00:00Z"
+    },
+    {
+      "id": 21,
+      "name": "fixture-tag-021",
+      "date_added": "2026-01-21T12:00:00Z"
+    },
+    {
+      "id": 22,
+      "name": "fixture-tag-022",
+      "date_added": "2026-01-22T12:00:00Z"
+    },
+    {
+      "id": 23,
+      "name": "fixture-tag-023",
+      "date_added": "2026-01-23T12:00:00Z"
+    },
+    {
+      "id": 24,
+      "name": "fixture-tag-024",
+      "date_added": "2026-01-24T12:00:00Z"
+    },
+    {
+      "id": 25,
+      "name": "fixture-tag-025",
+      "date_added": "2026-01-25T12:00:00Z"
+    },
+    {
+      "id": 26,
+      "name": "fixture-tag-026",
+      "date_added": "2026-01-26T12:00:00Z"
+    },
+    {
+      "id": 27,
+      "name": "fixture-tag-027",
+      "date_added": "2026-01-27T12:00:00Z"
+    },
+    {
+      "id": 28,
+      "name": "fixture-tag-028",
+      "date_added": "2026-01-28T12:00:00Z"
+    },
+    {
+      "id": 29,
+      "name": "fixture-tag-029",
+      "date_added": "2026-01-01T12:00:00Z"
+    },
+    {
+      "id": 30,
+      "name": "fixture-tag-030",
+      "date_added": "2026-01-02T12:00:00Z"
+    },
+    {
+      "id": 31,
+      "name": "fixture-tag-031",
+      "date_added": "2026-01-03T12:00:00Z"
+    },
+    {
+      "id": 32,
+      "name": "fixture-tag-032",
+      "date_added": "2026-01-04T12:00:00Z"
+    },
+    {
+      "id": 33,
+      "name": "fixture-tag-033",
+      "date_added": "2026-01-05T12:00:00Z"
+    },
+    {
+      "id": 34,
+      "name": "fixture-tag-034",
+      "date_added": "2026-01-06T12:00:00Z"
+    },
+    {
+      "id": 35,
+      "name": "fixture-tag-035",
+      "date_added": "2026-01-07T12:00:00Z"
+    },
+    {
+      "id": 36,
+      "name": "fixture-tag-036",
+      "date_added": "2026-01-08T12:00:00Z"
+    },
+    {
+      "id": 37,
+      "name": "fixture-tag-037",
+      "date_added": "2026-01-09T12:00:00Z"
+    },
+    {
+      "id": 38,
+      "name": "fixture-tag-038",
+      "date_added": "2026-01-10T12:00:00Z"
+    },
+    {
+      "id": 39,
+      "name": "fixture-tag-039",
+      "date_added": "2026-01-11T12:00:00Z"
+    },
+    {
+      "id": 40,
+      "name": "fixture-tag-040",
+      "date_added": "2026-01-12T12:00:00Z"
+    },
+    {
+      "id": 41,
+      "name": "fixture-tag-041",
+      "date_added": "2026-01-13T12:00:00Z"
+    },
+    {
+      "id": 42,
+      "name": "fixture-tag-042",
+      "date_added": "2026-01-14T12:00:00Z"
+    },
+    {
+      "id": 43,
+      "name": "fixture-tag-043",
+      "date_added": "2026-01-15T12:00:00Z"
+    },
+    {
+      "id": 44,
+      "name": "fixture-tag-044",
+      "date_added": "2026-01-16T12:00:00Z"
+    },
+    {
+      "id": 45,
+      "name": "fixture-tag-045",
+      "date_added": "2026-01-17T12:00:00Z"
+    },
+    {
+      "id": 46,
+      "name": "fixture-tag-046",
+      "date_added": "2026-01-18T12:00:00Z"
+    },
+    {
+      "id": 47,
+      "name": "fixture-tag-047",
+      "date_added": "2026-01-19T12:00:00Z"
+    },
+    {
+      "id": 48,
+      "name": "fixture-tag-048",
+      "date_added": "2026-01-20T12:00:00Z"
+    },
+    {
+      "id": 49,
+      "name": "fixture-tag-049",
+      "date_added": "2026-01-21T12:00:00Z"
+    },
+    {
+      "id": 50,
+      "name": "fixture-tag-050",
+      "date_added": "2026-01-22T12:00:00Z"
+    },
+    {
+      "id": 51,
+      "name": "fixture-tag-051",
+      "date_added": "2026-01-23T12:00:00Z"
+    },
+    {
+      "id": 52,
+      "name": "fixture-tag-052",
+      "date_added": "2026-01-24T12:00:00Z"
+    },
+    {
+      "id": 53,
+      "name": "fixture-tag-053",
+      "date_added": "2026-01-25T12:00:00Z"
+    },
+    {
+      "id": 54,
+      "name": "fixture-tag-054",
+      "date_added": "2026-01-26T12:00:00Z"
+    },
+    {
+      "id": 55,
+      "name": "fixture-tag-055",
+      "date_added": "2026-01-27T12:00:00Z"
+    },
+    {
+      "id": 56,
+      "name": "fixture-tag-056",
+      "date_added": "2026-01-28T12:00:00Z"
+    },
+    {
+      "id": 57,
+      "name": "fixture-tag-057",
+      "date_added": "2026-01-01T12:00:00Z"
+    },
+    {
+      "id": 58,
+      "name": "fixture-tag-058",
+      "date_added": "2026-01-02T12:00:00Z"
+    },
+    {
+      "id": 59,
+      "name": "fixture-tag-059",
+      "date_added": "2026-01-03T12:00:00Z"
+    },
+    {
+      "id": 60,
+      "name": "fixture-tag-060",
+      "date_added": "2026-01-04T12:00:00Z"
+    },
+    {
+      "id": 61,
+      "name": "fixture-tag-061",
+      "date_added": "2026-01-05T12:00:00Z"
+    },
+    {
+      "id": 62,
+      "name": "fixture-tag-062",
+      "date_added": "2026-01-06T12:00:00Z"
+    },
+    {
+      "id": 63,
+      "name": "fixture-tag-063",
+      "date_added": "2026-01-07T12:00:00Z"
+    },
+    {
+      "id": 64,
+      "name": "fixture-tag-064",
+      "date_added": "2026-01-08T12:00:00Z"
+    },
+    {
+      "id": 65,
+      "name": "fixture-tag-065",
+      "date_added": "2026-01-09T12:00:00Z"
+    },
+    {
+      "id": 66,
+      "name": "fixture-tag-066",
+      "date_added": "2026-01-10T12:00:00Z"
+    },
+    {
+      "id": 67,
+      "name": "fixture-tag-067",
+      "date_added": "2026-01-11T12:00:00Z"
+    },
+    {
+      "id": 68,
+      "name": "fixture-tag-068",
+      "date_added": "2026-01-12T12:00:00Z"
+    },
+    {
+      "id": 69,
+      "name": "fixture-tag-069",
+      "date_added": "2026-01-13T12:00:00Z"
+    },
+    {
+      "id": 70,
+      "name": "fixture-tag-070",
+      "date_added": "2026-01-14T12:00:00Z"
+    },
+    {
+      "id": 71,
+      "name": "fixture-tag-071",
+      "date_added": "2026-01-15T12:00:00Z"
+    },
+    {
+      "id": 72,
+      "name": "fixture-tag-072",
+      "date_added": "2026-01-16T12:00:00Z"
+    },
+    {
+      "id": 73,
+      "name": "fixture-tag-073",
+      "date_added": "2026-01-17T12:00:00Z"
+    },
+    {
+      "id": 74,
+      "name": "fixture-tag-074",
+      "date_added": "2026-01-18T12:00:00Z"
+    },
+    {
+      "id": 75,
+      "name": "fixture-tag-075",
+      "date_added": "2026-01-19T12:00:00Z"
+    },
+    {
+      "id": 76,
+      "name": "fixture-tag-076",
+      "date_added": "2026-01-20T12:00:00Z"
+    },
+    {
+      "id": 77,
+      "name": "fixture-tag-077",
+      "date_added": "2026-01-21T12:00:00Z"
+    },
+    {
+      "id": 78,
+      "name": "fixture-tag-078",
+      "date_added": "2026-01-22T12:00:00Z"
+    },
+    {
+      "id": 79,
+      "name": "fixture-tag-079",
+      "date_added": "2026-01-23T12:00:00Z"
+    },
+    {
+      "id": 80,
+      "name": "fixture-tag-080",
+      "date_added": "2026-01-24T12:00:00Z"
+    },
+    {
+      "id": 81,
+      "name": "fixture-tag-081",
+      "date_added": "2026-01-25T12:00:00Z"
+    },
+    {
+      "id": 82,
+      "name": "fixture-tag-082",
+      "date_added": "2026-01-26T12:00:00Z"
+    },
+    {
+      "id": 83,
+      "name": "fixture-tag-083",
+      "date_added": "2026-01-27T12:00:00Z"
+    },
+    {
+      "id": 84,
+      "name": "fixture-tag-084",
+      "date_added": "2026-01-28T12:00:00Z"
+    },
+    {
+      "id": 85,
+      "name": "fixture-tag-085",
+      "date_added": "2026-01-01T12:00:00Z"
+    },
+    {
+      "id": 86,
+      "name": "fixture-tag-086",
+      "date_added": "2026-01-02T12:00:00Z"
+    },
+    {
+      "id": 87,
+      "name": "fixture-tag-087",
+      "date_added": "2026-01-03T12:00:00Z"
+    },
+    {
+      "id": 88,
+      "name": "fixture-tag-088",
+      "date_added": "2026-01-04T12:00:00Z"
+    },
+    {
+      "id": 89,
+      "name": "fixture-tag-089",
+      "date_added": "2026-01-05T12:00:00Z"
+    },
+    {
+      "id": 90,
+      "name": "fixture-tag-090",
+      "date_added": "2026-01-06T12:00:00Z"
+    },
+    {
+      "id": 91,
+      "name": "fixture-tag-091",
+      "date_added": "2026-01-07T12:00:00Z"
+    },
+    {
+      "id": 92,
+      "name": "fixture-tag-092",
+      "date_added": "2026-01-08T12:00:00Z"
+    },
+    {
+      "id": 93,
+      "name": "fixture-tag-093",
+      "date_added": "2026-01-09T12:00:00Z"
+    },
+    {
+      "id": 94,
+      "name": "fixture-tag-094",
+      "date_added": "2026-01-10T12:00:00Z"
+    },
+    {
+      "id": 95,
+      "name": "fixture-tag-095",
+      "date_added": "2026-01-11T12:00:00Z"
+    },
+    {
+      "id": 96,
+      "name": "fixture-tag-096",
+      "date_added": "2026-01-12T12:00:00Z"
+    },
+    {
+      "id": 97,
+      "name": "fixture-tag-097",
+      "date_added": "2026-01-13T12:00:00Z"
+    },
+    {
+      "id": 98,
+      "name": "fixture-tag-098",
+      "date_added": "2026-01-14T12:00:00Z"
+    },
+    {
+      "id": 99,
+      "name": "fixture-tag-099",
+      "date_added": "2026-01-15T12:00:00Z"
+    },
+    {
+      "id": 100,
+      "name": "fixture-tag-100",
+      "date_added": "2026-01-16T12:00:00Z"
+    }
+  ]
+}
