@@ -2,6 +2,7 @@
 
 pub mod domain;
 pub mod error;
+pub mod validation;
 
 pub fn run() {
     tauri::Builder::default()
