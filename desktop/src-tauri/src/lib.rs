@@ -2,6 +2,7 @@
 
 pub mod domain;
 pub mod error;
+pub mod preferences;
 pub mod validation;
 
 pub fn run() {
