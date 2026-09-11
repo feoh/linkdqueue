@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+pub mod credentials;
 pub mod domain;
 pub mod error;
 pub mod preferences;
