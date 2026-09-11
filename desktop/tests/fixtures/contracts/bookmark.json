@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "url": "https://bookmark-001.invalid/articles/1",
+  "title": "Fixture bookmark 001",
+  "description": "Synthetic description.",
+  "notes": "Synthetic note.",
+  "isArchived": false,
+  "isRead": false,
+  "tagNames": ["fixture-01"],
+  "dateAdded": "2026-01-01T12:00:00Z",
+  "dateModified": "2026-02-01T12:00:00Z"
+}

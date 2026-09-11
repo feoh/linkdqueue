@@ -22,16 +22,28 @@
 
 <div class="app-shell">
   <aside class="sidebar" aria-label="Primary navigation">
-    <a class="brand" href="/" aria-label="Linkdqueue Desktop home" onclick={(event) => { event.preventDefault(); selectView('queue'); }}>
+    <a
+      class="brand"
+      href="/"
+      aria-label="Linkdqueue Desktop home"
+      onclick={(event) => {
+        event.preventDefault();
+        selectView('queue');
+      }}
+    >
       <span class="brand-mark" aria-hidden="true">L</span>
       <span>Linkdqueue</span>
     </a>
 
     <nav>
       <ul>
-        {#each navigation as item}
+        {#each navigation as item (item.id)}
           <li>
-            <button class:active={activeView === item.id} type="button" onclick={() => selectView(item.id)}>
+            <button
+              class:active={activeView === item.id}
+              type="button"
+              onclick={() => selectView(item.id)}
+            >
               {item.label}
             </button>
           </li>

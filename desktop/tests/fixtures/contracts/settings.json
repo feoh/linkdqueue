@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "generation": 7,
+  "connectionState": "configured",
+  "canonicalBaseUrl": "https://bookmarks.invalid/linkding",
+  "credentialStatus": "available",
+  "allowInsecureHttp": false,
+  "pendingCleanup": false,
+  "display": {
+    "theme": "system",
+    "textScale": 1
+  }
+}
