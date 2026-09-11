@@ -3,6 +3,7 @@
 pub mod credentials;
 pub mod domain;
 pub mod error;
+pub mod http;
 pub mod preferences;
 pub mod validation;
 
