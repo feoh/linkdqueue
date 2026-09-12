@@ -5,6 +5,7 @@
   import AppShell from './lib/components/AppShell.svelte';
   import Dialog from './lib/components/Dialog.svelte';
   import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
+  import ConnectionForm from './lib/features/settings/ConnectionForm.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
   import Toolbar from './lib/components/Toolbar.svelte';
   import {
@@ -131,23 +132,24 @@
       title="Loading your desktop settings"
       message="Checking the local connection state before showing your bookmarks."
     />
-  {:else if sessionState.kind === 'unconfigured'}
-    <StatusMessage
-      variant="info"
-      title="Connect Linkdqueue to Linkding"
-      message="Your saved connection is not configured. Enter it in Settings to begin."
-    >
-      <button class="secondary-button" type="button" onclick={() => selectView('settings')}>
-        Open Settings
-      </button>
-    </StatusMessage>
-  {:else if sessionState.kind === 'error'}
-    <StatusMessage
-      variant="error"
-      title="Desktop settings need attention"
-      message={sessionState.error.message}
-      retry={() => session && void session.retry()}
-    />
+  {:else if sessionState.kind === 'unconfigured' || sessionState.kind === 'error'}
+    {#if sessionState.kind === 'error'}
+      <StatusMessage
+        variant="error"
+        title="Desktop settings need attention"
+        message={sessionState.error.message}
+        retry={() => session && void session.retry()}
+      />
+    {/if}
+    {#if session}
+      <ConnectionForm
+        {bridge}
+        saveConnection={session.saveConnection}
+        onConfigured={(settings) => {
+          if (settings.status === 'ready') selectView('queue');
+        }}
+      />
+    {/if}
   {:else}
     {#if navigationState.view === 'settings' && sessionState.settings}
       <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
