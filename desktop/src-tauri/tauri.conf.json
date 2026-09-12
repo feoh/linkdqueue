@@ -29,6 +29,15 @@
   "bundle": {
     "active": true,
     "targets": ["appimage", "deb", "nsis", "dmg"],
-    "category": "Utility"
+    "icon": ["icons/icon.png"],
+    "category": "Utility",
+    "linux": {
+      "deb": {
+        "depends": ["libayatana-appindicator3-1", "libsecret-1-0"]
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
   }
 }

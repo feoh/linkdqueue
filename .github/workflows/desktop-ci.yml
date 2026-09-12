@@ -144,9 +144,12 @@ jobs:
           port=""
           status=""
           for _ in $(seq 1 90); do
-            port="$(docker port "$container_id" 9090/tcp | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | head -1)"
+            port="$(docker port "$container_id" 9090/tcp \
+              | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' \
+              | head -1)"
             if [ -n "$port" ]; then
-              status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              status="$(curl --silent --show-error --output /dev/null \
+                --write-out '%{http_code}' \
                 "http://127.0.0.1:${port}/linkding/api/user/profile/" || true)"
               if [ "$status" = 401 ]; then
                 break
@@ -157,12 +160,88 @@ jobs:
           test "$port" != ""
           test "$status" = 401
 
-          token="$(docker exec "$container_id" sh -c \
-            'PATH=/etc/linkding/.venv/bin:/usr/local/bin:/usr/bin:/bin python manage.py shell -c "from bookmarks.models import ApiToken; from django.contrib.auth import get_user_model; print(ApiToken.objects.create(user=get_user_model().objects.get(username=\\\"fixture-admin\\\"),name=\\\"q04\\\").key)"' \
-            | tail -n 1)"
+          token="$(docker exec "$container_id" sh -c '
+            PATH=/etc/linkding/.venv/bin:/usr/local/bin:/usr/bin:/bin \
+              python manage.py shell -c "
+                from bookmarks.models import ApiToken
+                from django.contrib.auth import get_user_model
+                print(ApiToken.objects.create(
+                  user=get_user_model().objects.get(username=\\\"fixture-admin\\\"),
+                  name=\\\"q04\\\"
+                ).key)
+              "
+            ' | tail -n 1)"
           test "${#token}" -eq 40
 
           LINKDING_TEST_BASE_URL="http://127.0.0.1:${port}/linkding" \
           LINKDING_TEST_TOKEN="$token" \
             cargo test --manifest-path desktop/src-tauri/Cargo.toml \
               --test linkding_live -- --ignored
+
+  linux-bundle:
+    name: Build Linux x86_64 candidate bundles
+    needs: validate
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Linux Tauri prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            librsvg2-dev \
+            patchelf \
+            wget
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build unsigned candidate bundles
+        run: npm run tauri -- build --bundles appimage,deb --ci
+
+      - name: Inspect Linux artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          appimage=(src-tauri/target/release/bundle/appimage/*.AppImage)
+          deb=(src-tauri/target/release/bundle/deb/*.deb)
+          test "${#appimage[@]}" -eq 1
+          test "${#deb[@]}" -eq 1
+          file "${appimage[0]}" | grep -E 'ELF 64-bit.*x86-64'
+          dpkg-deb -f "${deb[0]}" Package Version Architecture
+          test "$(dpkg-deb -f "${deb[0]}" Version)" = '2.0.0'
+          test "$(dpkg-deb -f "${deb[0]}" Architecture)" = 'amd64'
+          sha256sum "${appimage[0]}" "${deb[0]}" | tee linux-artifacts.sha256
+
+      - name: Upload unsigned candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkdqueue-linux-x86_64-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+            desktop/src-tauri/target/release/bundle/deb/*.deb
+            desktop/linux-artifacts.sha256
