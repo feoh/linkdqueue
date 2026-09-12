@@ -4,6 +4,7 @@
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
   import AppShell from './lib/components/AppShell.svelte';
   import Dialog from './lib/components/Dialog.svelte';
+  import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
   import Toolbar from './lib/components/Toolbar.svelte';
   import {
@@ -13,6 +14,7 @@
     type NavigationView,
   } from './lib/state/navigation';
   import { createAppQueryClient } from './lib/state/queryClient';
+  import { applyDisplay, clearDisplayListener } from './lib/state/display';
   import {
     createSessionController,
     initialSessionState,
@@ -31,6 +33,7 @@
   let sessionState: SessionState = $state(initialSessionState);
   let navigationState: NavigationState = $state(defaultNavigationState);
   let addDialogOpen = $state(false);
+  let displayError = $state('');
 
   const navigationItems: Array<{ id: NavigationView; label: string }> = [
     { id: 'queue', label: 'Queue' },
@@ -46,6 +49,9 @@
     let lastGeneration: number | null = null;
     const unsubscribeSession = controller.subscribe((next) => {
       sessionState = next;
+      if (next.kind === 'ready' || next.kind === 'unconfigured')
+        applyDisplay(next.settings.display);
+      if (next.kind === 'ready' || next.kind === 'unconfigured') displayError = '';
       const generation = next.kind === 'ready' ? next.generation : null;
       if (
         next.kind === 'unconfigured' ||
@@ -65,6 +71,7 @@
       unsubscribeSession();
       unsubscribeNavigation();
       controller.destroy();
+      clearDisplayListener();
       navigation.destroy();
     };
   });
@@ -80,6 +87,20 @@
 
   function activeTitle() {
     return navigationItems.find((item) => item.id === navigationState.view)?.label ?? 'Queue';
+  }
+
+  async function saveDisplay(theme: string, textScale: number) {
+    if (!session || (sessionState.kind !== 'ready' && sessionState.kind !== 'unconfigured')) return;
+    const previous = sessionState.settings;
+    try {
+      applyDisplay({ theme, textScale });
+      await session.setDisplayPreferences({ generation: previous.generation, theme, textScale });
+    } catch {
+      displayError =
+        'Preferences could not be saved. Your previous settings remain active; try again.';
+      applyDisplay(previous.display);
+      throw new Error('display preferences save failed');
+    }
   }
 </script>
 
@@ -128,11 +149,19 @@
       retry={() => session && void session.retry()}
     />
   {:else}
-    <StatusMessage
-      variant="info"
-      title="A calm place for your reading queue"
-      message="Choose a section to browse your Linkding bookmarks."
-    />
+    {#if navigationState.view === 'settings' && sessionState.settings}
+      <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
+    {:else}
+      <StatusMessage
+        variant="info"
+        title="A calm place for your reading queue"
+        message="Choose a section to browse your Linkding bookmarks."
+      />
+    {/if}
+  {/if}
+
+  {#if displayError}
+    <p class="preference-error" role="alert">{displayError}</p>
   {/if}
 
   {#if navigationState.search}

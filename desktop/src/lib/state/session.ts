@@ -181,8 +181,14 @@ export function createSessionController(
     } catch (rejected: unknown) {
       const error = normalizeIpcError(rejected);
       const generation = currentGeneration(current);
+      // A display write failure must not discard the usable session or credentials.
+      // Keep the previous settings so the picker can offer an inline retry.
       if (error.generation === undefined || error.generation === generation) {
-        state.set({ kind: 'error', source: errorSource(error.code), error, settings: null });
+        if (current.kind !== 'loading' && current.settings) {
+          state.set(current);
+        } else {
+          state.set({ kind: 'error', source: errorSource(error.code), error, settings: null });
+        }
       }
       throw error;
     }

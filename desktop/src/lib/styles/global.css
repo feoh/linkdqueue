@@ -1,0 +1,393 @@
+body {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+dialog:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  padding: 1.5rem 1rem;
+  color: var(--color-sidebar-text);
+  background: var(--color-sidebar);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.75rem;
+  margin: 0 0 2rem;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color: var(--color-sidebar);
+  background: var(--color-accent);
+  border-radius: 0.55rem;
+}
+
+nav ul {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+nav button {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  color: var(--color-sidebar-muted);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+nav button:hover,
+nav button:focus-visible,
+nav button.active {
+  color: var(--color-sidebar);
+  background: var(--color-accent);
+}
+
+.content {
+  width: min(100%, 1000px);
+  min-width: 0;
+  padding: 2rem clamp(1.25rem, 4vw, 4rem);
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.toolbar-heading {
+  min-width: 10rem;
+}
+
+.toolbar-controls,
+.toolbar-actions,
+.status-actions,
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.toolbar-controls {
+  justify-content: flex-end;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+}
+
+.search-field {
+  min-width: min(18rem, 100%);
+}
+
+.search-field input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.85rem;
+  color: inherit;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.primary-button,
+.secondary-button,
+.icon-button {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.primary-button {
+  color: var(--color-on-accent);
+  background: var(--color-focus);
+}
+
+.secondary-button {
+  color: var(--color-accent-strong);
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-border);
+}
+
+.primary-button:hover,
+.primary-button:focus-visible {
+  background: var(--color-accent-strong);
+}
+
+.secondary-button:hover,
+.secondary-button:focus-visible {
+  background: var(--color-accent-soft);
+}
+
+.status-message {
+  max-width: 680px;
+  padding: clamp(1.5rem, 5vw, 3rem) 0;
+}
+
+.status-message h2 {
+  max-width: 560px;
+  margin-bottom: 1rem;
+  font-size: clamp(1.8rem, 5vw, 3.25rem);
+  line-height: 1.05;
+}
+
+.status-message > p:not(.status-badge) {
+  max-width: 600px;
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.status-error h2 {
+  color: var(--color-danger);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  color: var(--color-accent-strong) !important;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.draft-note {
+  padding: 0.8rem 1rem;
+  color: var(--color-text) !important;
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent-border);
+}
+
+.dialog-placeholder {
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.5rem 4rem rgb(23 32 42 / 28%);
+}
+
+dialog::backdrop {
+  background: rgb(23 32 42 / 58%);
+}
+
+.dialog-panel {
+  padding: 1.25rem;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-header h2 {
+  margin-bottom: 0;
+}
+
+.dialog-description {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.dialog-body {
+  min-width: 0;
+}
+
+.icon-button {
+  width: 2.75rem;
+  padding: 0;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
+  background: var(--color-accent-soft);
+}
+
+.dialog-actions {
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.display-preferences {
+  display: grid;
+  max-width: 34rem;
+  gap: 1rem;
+}
+
+.display-preferences label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.display-preferences select {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.preference-error {
+  padding: 0.75rem 1rem;
+  color: var(--color-danger);
+  background: var(--color-accent-soft);
+  border-left: 3px solid var(--color-danger);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    padding: 1rem;
+  }
+
+  .brand {
+    margin-bottom: 1rem;
+  }
+
+  nav ul {
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  }
+
+  nav button {
+    padding: 0.6rem 0.45rem;
+    text-align: center;
+  }
+
+  .content {
+    padding-top: 1.25rem;
+  }
+
+  .toolbar,
+  .toolbar-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-controls,
+  .toolbar-actions {
+    justify-content: stretch;
+  }
+
+  .toolbar-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .search-field {
+    width: 100%;
+  }
+}

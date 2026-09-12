@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { LinkdqueueBridge } from './lib/api/bridge';
 import type { Settings } from './lib/api/types';
@@ -38,6 +38,49 @@ const bridge: LinkdqueueBridge = {
 };
 
 describe('desktop shell bootstrap and navigation', () => {
+  it('keeps loading visible until stored display settings are applied', async () => {
+    let resolveSettings: (value: Settings) => void = () => undefined;
+    const pending = new Promise<Settings>((resolve) => {
+      resolveSettings = resolve;
+    });
+    const delayedBridge = { ...bridge, getSettings: () => pending };
+    render(App, { props: { bridge: delayedBridge } });
+
+    expect(screen.getByText('Loading your desktop settings')).toBeInTheDocument();
+    expect(screen.queryByText('A calm place for your reading queue')).not.toBeInTheDocument();
+
+    resolveSettings({ ...settings, display: { theme: 'dracula', textScale: 1.5 } });
+    await waitFor(() =>
+      expect(screen.getByText('A calm place for your reading queue')).toBeInTheDocument(),
+    );
+    expect(document.documentElement.dataset.theme).toBe('dracula');
+    expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.5');
+  });
+
+  it('uses the current generation and recovers visibly when display persistence fails', async () => {
+    const setDisplayPreferences = vi.fn().mockRejectedValue({ code: 'preferences_write_failed' });
+    const failingBridge = { ...bridge, setDisplayPreferences };
+    render(App, { props: { bridge: failingBridge } });
+    await waitFor(() =>
+      expect(screen.getByText('A calm place for your reading queue')).toBeInTheDocument(),
+    );
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    const theme = screen.getByRole('combobox', { name: 'Color theme' });
+    await fireEvent.change(theme, { target: { value: 'dracula' } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Save display preferences' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('previous settings remain active'),
+    );
+    expect(setDisplayPreferences).toHaveBeenCalledWith({
+      generation: 1,
+      theme: 'dracula',
+      textScale: 1,
+    });
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(document.documentElement.dataset.theme).toBe('system');
+  });
   it('changes the active section through the sidebar', async () => {
     render(App, { props: { bridge } });
 
