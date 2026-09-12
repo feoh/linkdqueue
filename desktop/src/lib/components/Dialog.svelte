@@ -36,7 +36,7 @@
         dialog.setAttribute('open', '');
       }
       queueMicrotask(() => {
-        const autofocus = dialog.querySelector<HTMLElement>('[autofocus]');
+        const autofocus = dialog.querySelector<HTMLElement>('[autofocus], [data-autofocus]');
         (autofocus ?? dialog).focus();
       });
     } else if (!open && dialog.open) {

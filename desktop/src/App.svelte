@@ -3,7 +3,7 @@
 
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
   import AppShell from './lib/components/AppShell.svelte';
-  import Dialog from './lib/components/Dialog.svelte';
+  import AddBookmarkDialog from './lib/features/bookmarks/AddBookmarkDialog.svelte';
   import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
   import ConnectionForm from './lib/features/settings/ConnectionForm.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
@@ -14,7 +14,9 @@
     type NavigationState,
     type NavigationView,
   } from './lib/state/navigation';
-  import { createAppQueryClient } from './lib/state/queryClient';
+  import { BookmarkMutations } from './lib/queries/mutations';
+  import { TagCatalogue } from './lib/queries/tags';
+  import { ACCOUNT_QUERY_KEY, createAppQueryClient } from './lib/state/queryClient';
   import { applyDisplay, clearDisplayListener } from './lib/state/display';
   import {
     createSessionController,
@@ -27,6 +29,9 @@
 
   const queryClient = createAppQueryClient();
   let session: SessionController | null = $state(null);
+  let bookmarkMutations = $state<BookmarkMutations | null>(null);
+  let tagCatalogue = $state<TagCatalogue | null>(null);
+  let tagSuggestions = $state<string[]>([]);
   const navigation = createNavigationState(
     typeof globalThis.window === 'undefined' ? '' : globalThis.window.location.hash,
   );
@@ -45,6 +50,15 @@
   ];
 
   onMount(() => {
+    bookmarkMutations = new BookmarkMutations(
+      bridge,
+      queryClient,
+      () => (sessionState.kind === 'ready' ? sessionState.generation : null),
+      async (generation) => {
+        await queryClient.refetchQueries({ queryKey: [ACCOUNT_QUERY_KEY, generation] });
+      },
+    );
+    tagCatalogue = new TagCatalogue(bridge);
     const controller = createSessionController(bridge, queryClient);
     session = controller;
     let lastGeneration: number | null = null;
@@ -76,6 +90,19 @@
       navigation.destroy();
     };
   });
+
+  function openAddBookmark() {
+    if (sessionState.kind !== 'ready' || !tagCatalogue) return;
+    addDialogOpen = true;
+    void tagCatalogue
+      .load(sessionState.generation)
+      .then((snapshot) => {
+        tagSuggestions = snapshot.tags.map((tag) => tag.name);
+      })
+      .catch(() => {
+        tagSuggestions = [];
+      });
+  }
 
   function selectView(view: string) {
     const nextView = view as NavigationView;
@@ -120,7 +147,7 @@
       class="secondary-button"
       type="button"
       disabled={sessionState.kind !== 'ready'}
-      onclick={() => (addDialogOpen = true)}
+      onclick={openAddBookmark}
     >
       New bookmark
     </button>
@@ -171,12 +198,9 @@
   {/if}
 </AppShell>
 
-<Dialog
-  id="new-bookmark-dialog"
+<AddBookmarkDialog
   open={addDialogOpen}
-  title="New bookmark"
-  description="Bookmark creation will be available from this dialog."
+  createBookmark={(input) => bookmarkMutations!.createBookmark(input)}
+  suggestions={tagSuggestions}
   onClose={() => (addDialogOpen = false)}
->
-  <p class="dialog-placeholder">The connection is ready. The bookmark form is coming next.</p>
-</Dialog>
+/>

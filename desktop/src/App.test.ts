@@ -81,6 +81,34 @@ describe('desktop shell bootstrap and navigation', () => {
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
     expect(document.documentElement.dataset.theme).toBe('system');
   });
+  it('routes New bookmark through the shared mutation flow with the active generation', async () => {
+    const createBookmark = vi.fn().mockResolvedValue({
+      generation: 1,
+      data: {} as never,
+    });
+    const appBridge = {
+      ...bridge,
+      createBookmark,
+      listTags: vi.fn().mockResolvedValue({
+        generation: 1,
+        data: { results: [], next: null },
+      }),
+    } as unknown as LinkdqueueBridge;
+    render(App, { props: { bridge: appBridge } });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'New bookmark' })).toBeEnabled());
+    await fireEvent.click(screen.getByRole('button', { name: 'New bookmark' }));
+    await fireEvent.input(screen.getByLabelText(/URL/), {
+      target: { value: 'https://example.test/item' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Save bookmark' }));
+    await waitFor(() =>
+      expect(createBookmark).toHaveBeenCalledWith({
+        generation: 1,
+        url: 'https://example.test/item',
+      }),
+    );
+  });
+
   it('changes the active section through the sidebar', async () => {
     render(App, { props: { bridge } });
 
