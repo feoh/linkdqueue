@@ -48,6 +48,20 @@ pub struct ConnectionPreferences {
     pub credential_ref: Option<String>,
     pub allow_insecure_http: bool,
     pub pending_cleanup: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pending_save: Option<PendingSave>,
+}
+
+/// A non-secret journal entry for a credential replacement that has not yet
+/// committed its new connection. The staged reference is deleted during the
+/// next bootstrap if the process dies between staging and the final commit.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingSave {
+    pub canonical_base_url: String,
+    pub credential_ref: String,
+    pub allow_insecure_http: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -77,6 +91,7 @@ impl Preferences {
                 credential_ref: None,
                 allow_insecure_http: false,
                 pending_cleanup: None,
+                pending_save: None,
             },
             display: DisplayPreferences::default(),
         }
@@ -233,6 +248,19 @@ fn validate_connection(connection: &ConnectionPreferences) -> Result<(), AppErro
     if let Some(reference) = &connection.pending_cleanup {
         validate_credential_reference(reference)?;
     }
+    if let Some(pending_save) = &connection.pending_save {
+        validate_base_url(
+            &pending_save.canonical_base_url,
+            pending_save.allow_insecure_http,
+        )
+        .map_err(|_| corrupt("The pending save endpoint is invalid."))?;
+        validate_credential_reference(&pending_save.credential_ref)?;
+        if connection.credential_ref.as_deref() == Some(pending_save.credential_ref.as_str()) {
+            return Err(corrupt(
+                "A pending save cannot replace the active credential.",
+            ));
+        }
+    }
 
     match connection.state {
         ConnectionState::FirstBoot => {
@@ -247,12 +275,17 @@ fn validate_connection(connection: &ConnectionPreferences) -> Result<(), AppErro
         ConnectionState::Configured => {
             if connection.canonical_base_url.is_none()
                 || connection.credential_ref.is_none()
-                || connection.pending_cleanup.is_some()
+                || (connection.pending_cleanup.is_some()
+                    && connection.pending_cleanup == connection.credential_ref)
+                || (connection.pending_cleanup.is_some() && connection.pending_save.is_some())
             {
                 return Err(corrupt("Configured preferences are incomplete."));
             }
         }
         ConnectionState::Disconnected => {
+            if connection.pending_save.is_some() {
+                return Err(corrupt("Disconnected preferences contain a pending save."));
+            }
             if connection.pending_cleanup.is_some() && connection.credential_ref.is_none() {
                 return Err(corrupt(
                     "Pending credential cleanup has no credential reference.",
@@ -381,6 +414,7 @@ mod tests {
                 credential_ref: Some("linkdqueue/v1/test-reference".to_owned()),
                 allow_insecure_http: false,
                 pending_cleanup: None,
+                pending_save: None,
             },
             display: DisplayPreferences::default(),
         }

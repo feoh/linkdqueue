@@ -87,7 +87,8 @@ never in the keyring and never in a renderer-readable arbitrary file:
     "canonicalBaseUrl": "https://bookmarks.invalid/linkding",
     "credentialRef": "linkdqueue/v1/<digest>",
     "allowInsecureHttp": false,
-    "pendingCleanup": null
+    "pendingCleanup": null,
+    "pendingSave": null
   },
   "display": {"theme": "system", "textScale": 1.0}
 }
@@ -96,10 +97,12 @@ never in the keyring and never in a renderer-readable arbitrary file:
 `state` is `first_boot`, `configured`, or `disconnected`. The document may
 contain only schema-versioned non-secret values: canonical endpoint,
 credential reference, generation, connection state, pending cleanup metadata,
-and display preferences. Never serialize a token, authorization header, draft
-value, or keyring error detail. Write a temp file, flush/sync it, atomically
-rename it, and apply restrictive file permissions where the platform supports
-them.
+pending save journal metadata, and display preferences. A `pendingSave` entry
+contains only the intended canonical endpoint, staged credential reference,
+and HTTP opt-in; it never authorizes a connection. Never serialize a token,
+authorization header, draft value, or keyring error detail. Write a temp file,
+flush/sync it, atomically rename it, and apply restrictive file permissions
+where the platform supports them.
 
 On first boot, absence means `first_boot`. A corrupt/unknown-version document
 fails closed as `disconnected`, preserves the original for diagnostics/recovery
@@ -161,9 +164,11 @@ A changed endpoint with `retainExistingToken` is rejected. For a new token Rust:
 2. writes a pending operation to preferences while leaving the prior committed
    connection usable;
 3. writes the new token to the new native entry and validates storage internally;
-4. commits the new endpoint/reference as configured and clears pending state;
-5. deletes the old entry only after the new commit, recording cleanup if delete
-   fails.
+4. commits the new endpoint/reference as configured and records the old
+   reference in `pendingCleanup` until deletion succeeds;
+5. deletes the old entry only after the new commit, clearing `pendingCleanup`
+   when deletion succeeds. A `pendingSave` journal left by a crash before the
+   final commit is deleted during bootstrap; it never authorizes a connection.
 
 If a staged write or final preferences commit fails, Rust keeps the prior
 committed connection, attempts deletion of the new entry, and reports a visible

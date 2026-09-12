@@ -126,6 +126,13 @@ pub fn validate_base_url(
 /// credentials are rejected so opening a bookmark cannot leak them.
 pub fn validate_http_url(input: &str) -> Result<Url, AppError> {
     let input = input.trim();
+    if input.chars().any(char::is_control) {
+        return Err(AppError::new(
+            ErrorCode::ExternalUrlRejected,
+            "The URL cannot contain control characters.",
+            false,
+        ));
+    }
     let url = Url::parse(input)
         .map_err(|_| AppError::new(ErrorCode::ExternalUrlRejected, "Enter a valid URL.", false))?;
     if url.scheme() != "http" && url.scheme() != "https" {
@@ -135,7 +142,7 @@ pub fn validate_http_url(input: &str) -> Result<Url, AppError> {
             false,
         ));
     }
-    if url.host_str().is_none() || has_userinfo(&url) {
+    if url.host_str().map_or(true, str::is_empty) || has_userinfo(&url) {
         return Err(AppError::new(
             ErrorCode::ExternalUrlRejected,
             "The URL must contain a host and no credentials.",
@@ -296,6 +303,10 @@ pub fn build_profile_url(base: &ValidatedBaseUrl) -> Result<Url, AppError> {
     join_fixed(base, "api/user/profile/")
 }
 
+pub fn build_bookmark_collection_url(base: &ValidatedBaseUrl) -> Result<Url, AppError> {
+    join_fixed(base, "api/bookmarks/")
+}
+
 pub fn build_bookmarks_url(
     base: &ValidatedBaseUrl,
     scope: BookmarkScope,
@@ -316,6 +327,9 @@ pub fn build_bookmarks_url(
         let mut pairs = url.query_pairs_mut();
         pairs.append_pair("limit", &limit.to_string());
         pairs.append_pair("offset", &offset.to_string());
+        if matches!(scope, BookmarkScope::Queue) {
+            pairs.append_pair("unread", "yes");
+        }
         if let Some(q) = q {
             pairs.append_pair("q", &q);
         }
@@ -489,7 +503,7 @@ mod tests {
         .expect("bookmark URL");
         assert_eq!(
             url.as_str(),
-            "https://example.invalid/linkding/api/bookmarks/?limit=20&offset=20&q=rust+%2B+caf%C3%A9+%23c%2B%2B"
+            "https://example.invalid/linkding/api/bookmarks/?limit=20&offset=20&unread=yes&q=rust+%2B+caf%C3%A9+%23c%2B%2B"
         );
         assert_eq!(
             url.query_pairs()
@@ -513,6 +527,22 @@ mod tests {
         assert_eq!(
             archive.as_str(),
             "https://example.invalid/linkding/api/bookmarks/archived/?limit=20&offset=0"
+        );
+        assert!(archive
+            .query_pairs()
+            .all(|(key, _)| key != "unread" && key != "is_read" && key != "is_archived"));
+        let queue = build_bookmarks_url(
+            &base("https://example.invalid/linkding"),
+            BookmarkScope::Queue,
+            None,
+            Some("systems"),
+            0,
+            None,
+        )
+        .expect("queue URL");
+        assert_eq!(
+            queue.as_str(),
+            "https://example.invalid/linkding/api/bookmarks/?limit=20&offset=0&unread=yes&q=%23systems"
         );
         assert_eq!(
             build_tags_url(&base("https://example.invalid/linkding"), 100, None)
