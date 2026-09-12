@@ -4,6 +4,7 @@
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
   import AppShell from './lib/components/AppShell.svelte';
   import AddBookmarkDialog from './lib/features/bookmarks/AddBookmarkDialog.svelte';
+  import BookmarkList from './lib/features/bookmarks/BookmarkList.svelte';
   import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
   import ConnectionForm from './lib/features/settings/ConnectionForm.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
@@ -216,6 +217,14 @@
         clearConnection={clearConfiguredConnection}
       />
       <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
+    {:else if sessionState.kind === 'ready' && navigationState.scope}
+      <BookmarkList
+        {bridge}
+        generation={sessionState.generation}
+        scope={navigationState.scope}
+        query={navigationState.search}
+        tag={navigationState.tag ?? undefined}
+      />
     {:else}
       <StatusMessage
         variant="info"

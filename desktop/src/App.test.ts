@@ -20,13 +20,18 @@ const unusedCommand = async (): Promise<never> => {
   throw new Error('unused command in App test');
 };
 
+const emptyBookmarks = async () => ({
+  generation: settings.generation,
+  data: { count: 0, next: null, previous: null, results: [] },
+});
+
 const bridge: LinkdqueueBridge = {
   getSettings: async () => settings,
   testConnection: unusedCommand,
   saveConnection: unusedCommand,
   clearConnection: unusedCommand,
   setDisplayPreferences: unusedCommand,
-  listBookmarks: unusedCommand,
+  listBookmarks: emptyBookmarks,
   listTags: unusedCommand,
   createBookmark: unusedCommand,
   markRead: unusedCommand,
@@ -51,7 +56,7 @@ describe('desktop shell bootstrap and navigation', () => {
 
     resolveSettings({ ...settings, display: { theme: 'dracula', textScale: 1.5 } });
     await waitFor(() =>
-      expect(screen.getByText('A calm place for your reading queue')).toBeInTheDocument(),
+      expect(screen.getByText('Your reading queue is empty.')).toBeInTheDocument(),
     );
     expect(document.documentElement.dataset.theme).toBe('dracula');
     expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.5');
@@ -62,7 +67,7 @@ describe('desktop shell bootstrap and navigation', () => {
     const failingBridge = { ...bridge, setDisplayPreferences };
     render(App, { props: { bridge: failingBridge } });
     await waitFor(() =>
-      expect(screen.getByText('A calm place for your reading queue')).toBeInTheDocument(),
+      expect(screen.getByText('Your reading queue is empty.')).toBeInTheDocument(),
     );
 
     await fireEvent.click(screen.getByRole('button', { name: 'Settings' }));

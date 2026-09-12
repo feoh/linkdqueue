@@ -391,3 +391,65 @@ dialog::backdrop {
     width: 100%;
   }
 }
+
+.bookmark-list {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+.bookmark-rows {
+  display: grid;
+  gap: 0.85rem;
+}
+.bookmark-row {
+  min-width: 0;
+  padding: 1.1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+}
+.bookmark-row-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.bookmark-row h2,
+.bookmark-description,
+.bookmark-hostname {
+  overflow-wrap: anywhere;
+}
+.bookmark-row h2 {
+  margin-bottom: 0.3rem;
+  font-size: 1.15rem;
+}
+.bookmark-hostname {
+  margin-bottom: 0.7rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+.bookmark-description {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+.bookmark-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+.bookmark-badge,
+.bookmark-tag {
+  padding: 0.2rem 0.5rem;
+  color: var(--color-muted);
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+.bookmark-error {
+  margin: 0.75rem 0 0;
+  color: var(--color-danger, #a33);
+}
+.bookmark-sentinel {
+  height: 1px;
+}
