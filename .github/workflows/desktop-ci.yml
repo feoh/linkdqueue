@@ -102,3 +102,67 @@ jobs:
       - name: Run Rust tests
         run: >-
           cargo test --manifest-path src-tauri/Cargo.toml
+
+  linkding-integration:
+    name: Verify disposable Linkding compatibility
+    needs: validate
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+
+      - name: Run pinned disposable Linkding contract test
+        shell: bash
+        run: |
+          set -euo pipefail
+          container_name="linkdqueue-q04-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          container_id=""
+          cleanup() {
+            if [ -n "$container_id" ]; then
+              docker rm --force "$container_id" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          container_id="$({
+            docker run --detach --rm \
+              --name "$container_name" \
+              --mount type=tmpfs,destination=/etc/linkding/data \
+              --publish 127.0.0.1::9090 \
+              --env LD_CONTEXT_PATH=linkding/ \
+              --env LD_DISABLE_BACKGROUND_TASKS=True \
+              --env LD_SUPERUSER_NAME=fixture-admin \
+              --env LD_SUPERUSER_PASSWORD=fixture-password \
+              sissbruecker/linkding:1.46.2
+          })"
+
+          port=""
+          status=""
+          for _ in $(seq 1 90); do
+            port="$(docker port "$container_id" 9090/tcp | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | head -1)"
+            if [ -n "$port" ]; then
+              status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+                "http://127.0.0.1:${port}/linkding/api/user/profile/" || true)"
+              if [ "$status" = 401 ]; then
+                break
+              fi
+            fi
+            sleep 1
+          done
+          test "$port" != ""
+          test "$status" = 401
+
+          token="$(docker exec "$container_id" sh -c \
+            'PATH=/etc/linkding/.venv/bin:/usr/local/bin:/usr/bin:/bin python manage.py shell -c "from bookmarks.models import ApiToken; from django.contrib.auth import get_user_model; print(ApiToken.objects.create(user=get_user_model().objects.get(username=\\\"fixture-admin\\\"),name=\\\"q04\\\").key)"' \
+            | tail -n 1)"
+          test "${#token}" -eq 40
+
+          LINKDING_TEST_BASE_URL="http://127.0.0.1:${port}/linkding" \
+          LINKDING_TEST_TOKEN="$token" \
+            cargo test --manifest-path desktop/src-tauri/Cargo.toml \
+              --test linkding_live -- --ignored
