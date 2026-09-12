@@ -2,6 +2,10 @@
   import { onMount } from 'svelte';
 
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
+  import AppShell from './lib/components/AppShell.svelte';
+  import Dialog from './lib/components/Dialog.svelte';
+  import StatusMessage from './lib/components/StatusMessage.svelte';
+  import Toolbar from './lib/components/Toolbar.svelte';
   import {
     createNavigationState,
     defaultNavigationState,
@@ -26,6 +30,7 @@
 
   let sessionState: SessionState = $state(initialSessionState);
   let navigationState: NavigationState = $state(defaultNavigationState);
+  let addDialogOpen = $state(false);
 
   const navigationItems: Array<{ id: NavigationView; label: string }> = [
     { id: 'queue', label: 'Queue' },
@@ -64,12 +69,17 @@
     };
   });
 
-  function selectView(view: NavigationView) {
+  function selectView(view: string) {
+    const nextView = view as NavigationView;
     navigation.set({
-      view,
-      scope: view === 'queue' ? 'queue' : view === 'archive' ? 'archive' : null,
+      view: nextView,
+      scope: nextView === 'queue' ? 'queue' : nextView === 'archive' ? 'archive' : null,
       tag: null,
     });
+  }
+
+  function activeTitle() {
+    return navigationItems.find((item) => item.id === navigationState.view)?.label ?? 'Queue';
   }
 </script>
 
@@ -77,82 +87,65 @@
   <meta name="description" content="A focused desktop reading queue for Linkding." />
 </svelte:head>
 
-<div class="app-shell">
-  <aside class="sidebar" aria-label="Primary navigation">
-    <a
-      class="brand"
-      href="#/queue?scope=queue"
-      aria-label="Linkdqueue Desktop home"
-      onclick={(event) => {
-        event.preventDefault();
-        selectView('queue');
-      }}
+<AppShell items={navigationItems} activeId={navigationState.view} onNavigate={selectView}>
+  <Toolbar
+    eyebrow={sessionState.kind === 'ready' ? 'Connected' : 'Desktop preview'}
+    title={activeTitle()}
+    searchValue={navigationState.search}
+    onSearch={(search) => navigation.setSearch(search)}
+  >
+    <button
+      class="secondary-button"
+      type="button"
+      disabled={sessionState.kind !== 'ready'}
+      onclick={() => (addDialogOpen = true)}
     >
-      <span class="brand-mark" aria-hidden="true">L</span>
-      <span>Linkdqueue</span>
-    </a>
+      New bookmark
+    </button>
+  </Toolbar>
 
-    <nav>
-      <ul>
-        {#each navigationItems as item (item.id)}
-          <li>
-            <button
-              class:active={navigationState.view === item.id}
-              type="button"
-              onclick={() => selectView(item.id)}
-            >
-              {item.label}
-            </button>
-          </li>
-        {/each}
-      </ul>
-    </nav>
-  </aside>
+  {#if sessionState.kind === 'loading'}
+    <StatusMessage
+      variant="loading"
+      title="Loading your desktop settings"
+      message="Checking the local connection state before showing your bookmarks."
+    />
+  {:else if sessionState.kind === 'unconfigured'}
+    <StatusMessage
+      variant="info"
+      title="Connect Linkdqueue to Linkding"
+      message="Your saved connection is not configured. Enter it in Settings to begin."
+    >
+      <button class="secondary-button" type="button" onclick={() => selectView('settings')}>
+        Open Settings
+      </button>
+    </StatusMessage>
+  {:else if sessionState.kind === 'error'}
+    <StatusMessage
+      variant="error"
+      title="Desktop settings need attention"
+      message={sessionState.error.message}
+      retry={() => session && void session.retry()}
+    />
+  {:else}
+    <StatusMessage
+      variant="info"
+      title="A calm place for your reading queue"
+      message="Choose a section to browse your Linkding bookmarks."
+    />
+  {/if}
 
-  <main class="content">
-    <header class="toolbar">
-      <div>
-        <p class="eyebrow">{sessionState.kind === 'ready' ? 'Connected' : 'Desktop preview'}</p>
-        <h1>{navigationItems.find((item) => item.id === navigationState.view)?.label}</h1>
-      </div>
-      <label class="search-field">
-        <span class="sr-only">Search bookmarks</span>
-        <input
-          value={navigationState.search}
-          oninput={(event) => navigation.setSearch(event.currentTarget.value)}
-          type="search"
-          placeholder="Search bookmarks"
-        />
-      </label>
-    </header>
+  {#if navigationState.search}
+    <p class="draft-note" role="status">Search draft: <strong>{navigationState.search}</strong></p>
+  {/if}
+</AppShell>
 
-    {#if sessionState.kind === 'loading'}
-      <p class="welcome-card" role="status">Loading desktop settings…</p>
-    {:else if sessionState.kind === 'unconfigured'}
-      <section class="welcome-card" aria-labelledby="welcome-heading">
-        <p class="status-badge">Setup required</p>
-        <h2 id="welcome-heading">Connect Linkdqueue to Linkding.</h2>
-        <p>Your saved connection is not configured. Enter it in Settings to begin.</p>
-      </section>
-    {:else if sessionState.kind === 'error'}
-      <section class="welcome-card" aria-labelledby="error-heading">
-        <p class="status-badge">
-          {sessionState.source === 'credential' ? 'Credential error' : 'Storage error'}
-        </p>
-        <h2 id="error-heading">Desktop settings need attention.</h2>
-        <p>{sessionState.error.message}</p>
-        <button type="button" onclick={() => session && void session.retry()}>Retry</button>
-      </section>
-    {:else}
-      <section class="welcome-card" aria-labelledby="welcome-heading">
-        <p class="status-badge">Foundation ready</p>
-        <h2 id="welcome-heading">A calm place for your reading queue.</h2>
-        <p>Choose a section to browse your Linkding bookmarks.</p>
-      </section>
-    {/if}
-
-    {#if navigationState.search}
-      <p class="draft-note">Search draft: <strong>{navigationState.search}</strong></p>
-    {/if}
-  </main>
-</div>
+<Dialog
+  id="new-bookmark-dialog"
+  open={addDialogOpen}
+  title="New bookmark"
+  description="Bookmark creation will be available from this dialog."
+  onClose={() => (addDialogOpen = false)}
+>
+  <p class="dialog-placeholder">The connection is ready. The bookmark form is coming next.</p>
+</Dialog>
