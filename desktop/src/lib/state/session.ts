@@ -150,7 +150,10 @@ export function createSessionController(
       const error = normalizeIpcError(rejected);
       const generation = currentGeneration(current);
       if (error.generation === undefined || error.generation === generation) {
-        state.set({ kind: 'error', source: errorSource(error.code), error, settings: null });
+        // A failed replacement leaves the committed connection usable. Keep the
+        // ready snapshot so the settings surface never implies it was replaced.
+        if (current.kind === 'ready') state.set(current);
+        else state.set({ kind: 'error', source: errorSource(error.code), error, settings: null });
       }
       throw error;
     }
@@ -158,6 +161,30 @@ export function createSessionController(
 
   async function clearConnection(input: ClearConnectionInput): Promise<ClearConnectionResult> {
     await retireSessionState();
+    const previous = current;
+    if (previous.kind !== 'loading') {
+      state.set({
+        kind: 'unconfigured',
+        settings: {
+          ...(previous.settings ?? {
+            status: 'unconfigured',
+            canonicalBaseUrl: null,
+            credentialStatus: null,
+            errorCode: null,
+            allowInsecureHttp: false,
+            pendingCleanup: false,
+            display: { theme: 'system', textScale: 1 },
+            generation: input.generation,
+          }),
+          status: 'unconfigured',
+          canonicalBaseUrl: null,
+          credentialStatus: null,
+          errorCode: null,
+          pendingCleanup: true,
+          generation: input.generation,
+        },
+      });
+    }
     try {
       const result = await bridge.clearConnection(input);
       await bootstrap();

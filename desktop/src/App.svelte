@@ -40,6 +40,8 @@
   let navigationState: NavigationState = $state(defaultNavigationState);
   let addDialogOpen = $state(false);
   let displayError = $state('');
+  let connectionWarning = $state('');
+  let lastClearGeneration = $state<number | null>(null);
 
   const navigationItems: Array<{ id: NavigationView; label: string }> = [
     { id: 'queue', label: 'Queue' },
@@ -117,6 +119,32 @@
     return navigationItems.find((item) => item.id === navigationState.view)?.label ?? 'Queue';
   }
 
+  async function clearConfiguredConnection() {
+    if (!session || sessionState.kind !== 'ready') throw new Error('Not connected');
+    lastClearGeneration = sessionState.generation;
+    const result = await session.clearConnection({ generation: sessionState.generation });
+    if (result.warning) {
+      connectionWarning =
+        result.warning === 'old_state_may_return'
+          ? 'Cleanup is incomplete: old data may return after restart. Retry clear.'
+          : 'Disconnected, but cleanup was incomplete. Retry clear.';
+    }
+    return result;
+  }
+
+  async function retryClear() {
+    if (!session || lastClearGeneration === null) return;
+    try {
+      const result = await session.clearConnection({ generation: lastClearGeneration });
+      if (!result.warning) {
+        connectionWarning = '';
+        lastClearGeneration = null;
+      }
+    } catch {
+      /* leave the warning visible for another retry */
+    }
+  }
+
   async function saveDisplay(theme: string, textScale: number) {
     if (!session || (sessionState.kind !== 'ready' && sessionState.kind !== 'unconfigured')) return;
     const previous = sessionState.settings;
@@ -171,14 +199,22 @@
     {#if session}
       <ConnectionForm
         {bridge}
+        settings={sessionState.settings}
         saveConnection={session.saveConnection}
         onConfigured={(settings) => {
-          if (settings.status === 'ready') selectView('queue');
+          if (settings.status === 'ready' && sessionState.kind === 'unconfigured')
+            selectView('queue');
         }}
       />
     {/if}
   {:else}
     {#if navigationState.view === 'settings' && sessionState.settings}
+      <ConnectionForm
+        {bridge}
+        settings={sessionState.settings}
+        saveConnection={session!.saveConnection}
+        clearConnection={clearConfiguredConnection}
+      />
       <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
     {:else}
       <StatusMessage
@@ -187,6 +223,13 @@
         message="Choose a section to browse your Linkding bookmarks."
       />
     {/if}
+  {/if}
+
+  {#if connectionWarning}
+    <p class="preference-error" role="alert">{connectionWarning}</p>
+    <button class="secondary-button" type="button" onclick={() => void retryClear()}
+      >Retry clear</button
+    >
   {/if}
 
   {#if displayError}

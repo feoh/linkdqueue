@@ -6,6 +6,8 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+#[cfg(test)]
+use std::sync::atomic::AtomicBool;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde::{Deserialize, Serialize};
@@ -138,6 +140,8 @@ impl ConnectionPreferences {
 #[derive(Debug, Clone)]
 pub struct PreferencesStore {
     config_dir: PathBuf,
+    #[cfg(test)]
+    fail_next_save: std::sync::Arc<AtomicBool>,
 }
 
 impl PreferencesStore {
@@ -152,11 +156,18 @@ impl PreferencesStore {
         }
         Ok(Self {
             config_dir: config_dir.to_owned(),
+            #[cfg(test)]
+            fail_next_save: std::sync::Arc::new(AtomicBool::new(false)),
         })
     }
 
     pub fn path(&self) -> PathBuf {
         self.config_dir.join(PREFERENCES_FILE)
+    }
+
+    #[cfg(test)]
+    pub fn fail_next_save(&self) {
+        self.fail_next_save.store(true, Ordering::Release);
     }
 
     pub fn load(&self) -> Result<Preferences, AppError> {
@@ -186,6 +197,10 @@ impl PreferencesStore {
 
     pub fn save(&self, preferences: &Preferences) -> Result<(), AppError> {
         let preferences = preferences.normalized_for_storage()?;
+        #[cfg(test)]
+        if self.fail_next_save.swap(false, Ordering::AcqRel) {
+            return Err(write_failed());
+        }
         let bytes = serde_json::to_vec_pretty(&preferences).map_err(|_| {
             AppError::new(
                 ErrorCode::PreferencesWriteFailed,

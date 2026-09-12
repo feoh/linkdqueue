@@ -692,17 +692,16 @@ impl SessionService {
 
         let deleted = self.delete_credential(&credential_ref).await.is_ok();
         if !tombstone {
-            let warning = if deleted {
-                self.set_cleanup_pending(disabled.generation, false)?;
-                ClearWarning::PreferencesWriteFailed
-            } else {
-                ClearWarning::OldStateMayReturn
-            };
+            // If the tombstone could not be persisted, the old configured
+            // preferences remain authoritative on restart. Credential deletion
+            // alone cannot make this durable: report the restart risk and keep
+            // the in-process cleanup marker set.
+            self.set_cleanup_pending(disabled.generation, true)?;
             return Ok(ClearConnectionResult {
                 disconnected: true,
                 durable: false,
-                cleanup_pending: !deleted,
-                warning: Some(warning),
+                cleanup_pending: true,
+                warning: Some(ClearWarning::OldStateMayReturn),
             });
         }
         if !deleted {
@@ -1477,6 +1476,77 @@ mod tests {
         assert!(recovered.durable);
         assert!(!recovered.cleanup_pending);
         assert_eq!(inner.get("linkdqueue/v1/fixture").unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn clear_tombstone_write_failure_is_restart_risk_even_after_credential_delete() {
+        let (service, store, credentials) = ready_service();
+        let ready = service.bootstrap().await.expect("ready bootstrap");
+        store.fail_next_save();
+
+        let result = service
+            .clear_connection(ClearConnectionInput {
+                generation: ready.generation,
+            })
+            .await
+            .expect("clear reports persistent failure");
+        assert_eq!(result.warning, Some(ClearWarning::OldStateMayReturn));
+        assert!(!result.durable);
+        assert!(result.cleanup_pending);
+        assert_eq!(
+            service.public_snapshot().status,
+            SessionStatus::Unconfigured
+        );
+        assert_eq!(credentials.get("linkdqueue/v1/fixture").unwrap(), None);
+
+        // The old preferences remain on disk, but the process must not resume
+        // the connection after restart with the deleted native credential.
+        let restarted = SessionService::new(store, Arc::new(credentials));
+        assert_eq!(
+            restarted.bootstrap().await.unwrap_err().code,
+            ErrorCode::CredentialMissing
+        );
+        let snapshot = restarted.public_snapshot();
+        assert_eq!(snapshot.status, SessionStatus::CredentialError);
+        assert!(!snapshot.pending_cleanup);
+    }
+
+    #[tokio::test]
+    async fn clear_both_persistent_stores_failure_reports_restart_risk_and_reconnects_after_restart(
+    ) {
+        let store = preferences_store();
+        configured_preferences(&store);
+        let inner = FakeCredentialStore::default();
+        inner
+            .set("linkdqueue/v1/fixture", "fixture-secret")
+            .expect("save credential");
+        let fail_delete = Arc::new(AtomicBool::new(true));
+        let credentials = DeleteFailingCredentialStore {
+            inner: inner.clone(),
+            fail_delete: Arc::clone(&fail_delete),
+        };
+        let service = SessionService::new(store.clone(), Arc::new(credentials.clone()));
+        let ready = service.bootstrap().await.expect("ready bootstrap");
+        store.fail_next_save();
+
+        let result = service
+            .clear_connection(ClearConnectionInput {
+                generation: ready.generation,
+            })
+            .await
+            .expect("clear reports both-store failure");
+        assert_eq!(result.warning, Some(ClearWarning::OldStateMayReturn));
+        assert!(!result.durable);
+        assert!(result.cleanup_pending);
+        assert_eq!(
+            service.public_snapshot().status,
+            SessionStatus::Unconfigured
+        );
+
+        let restarted = SessionService::new(store, Arc::new(credentials));
+        let snapshot = restarted.bootstrap().await.expect("restart bootstrap");
+        assert_eq!(snapshot.status, SessionStatus::Ready);
+        assert!(!snapshot.pending_cleanup);
     }
 
     #[tokio::test]
