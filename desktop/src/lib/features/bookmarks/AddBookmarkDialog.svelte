@@ -63,11 +63,12 @@
     attempted = false;
   }
 
-  function closeRequested() {
-    if (submitting) return;
-    if (dirty && !globalThis.confirm('Discard this bookmark draft?')) return;
+  function closeRequested(): boolean {
+    if (submitting) return false;
+    if (dirty && !globalThis.confirm('Discard this bookmark draft?')) return false;
     resetDraft();
     onClose?.();
+    return true;
   }
 
   function changeTags(next: string[]) {

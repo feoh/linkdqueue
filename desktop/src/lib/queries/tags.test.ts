@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { LinkdqueueBridge } from '../api/bridge';
 import type { Tag } from '../api/types';
@@ -125,6 +125,22 @@ describe('account-scoped tag catalogue', () => {
     const result = await second;
     expect(result.tags.map(({ id }) => id)).toEqual([2]);
     expect(result.generation).toBe(2);
+  });
+
+  it('restarts an in-flight catalogue load after confirmed invalidation', async () => {
+    const pending: Array<(value: TagPage) => void> = [];
+    const listTags = vi.fn(() => new Promise<TagPage>((resolve) => pending.push(resolve)));
+    const catalogue = new TagCatalogue(bridgeFor(listTags));
+
+    const first = catalogue.load(7);
+    catalogue.invalidateAfterConfirmedMutation(true);
+    const second = catalogue.load(7);
+    pending[1]?.(page(7, [tag(2)], null));
+    pending[0]?.(page(7, [tag(1)], null));
+
+    await expect(first).rejects.toBeInstanceOf(StaleTagResponseError);
+    await expect(second).resolves.toMatchObject({ status: 'ready', tags: [tag(2)] });
+    expect(listTags).toHaveBeenCalledTimes(2);
   });
 
   it('retains selected names and does not duplicate tags after refresh', async () => {

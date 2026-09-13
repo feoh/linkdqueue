@@ -122,6 +122,7 @@ export class TagCatalogue {
     this.revision += 1;
     this.status = 'idle';
     this.pages = [];
+    this.inFlight = null;
     this.failedOffset = null;
     this.currentError = null;
   }

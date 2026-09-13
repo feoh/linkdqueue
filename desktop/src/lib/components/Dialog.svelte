@@ -15,7 +15,7 @@
     open?: boolean;
     title: string;
     description?: string;
-    onClose?: () => void;
+    onClose?: () => boolean | void;
     children?: Snippet;
     actions?: Snippet;
   } = $props();
@@ -51,8 +51,11 @@
     });
   }
 
+  let closeWasRequested = false;
+
   function handleNativeClose() {
-    onClose?.();
+    if (!closeWasRequested) onClose?.();
+    closeWasRequested = false;
     restoreFocus();
   }
 
@@ -66,14 +69,20 @@
     }
   }
 
+  function requestClose() {
+    if (onClose?.() === false) return;
+    closeWasRequested = true;
+    closeDialog();
+  }
+
   function handleBackdropClick(event: MouseEvent) {
-    if (event.target === dialog) closeDialog();
+    if (event.target === dialog) requestClose();
   }
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault();
-      closeDialog();
+      requestClose();
     }
   }
 </script>
@@ -91,7 +100,7 @@
   <form class="dialog-panel" method="dialog">
     <header class="dialog-header">
       <h2 id={titleId}>{title}</h2>
-      <button class="icon-button" type="button" aria-label="Close dialog" onclick={closeDialog}
+      <button class="icon-button" type="button" aria-label="Close dialog" onclick={requestClose}
         >×</button
       >
     </header>

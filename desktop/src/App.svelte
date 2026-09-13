@@ -4,6 +4,7 @@
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
   import AppShell from './lib/components/AppShell.svelte';
   import AddBookmarkDialog from './lib/features/bookmarks/AddBookmarkDialog.svelte';
+  import EditTagsDialog from './lib/features/bookmarks/EditTagsDialog.svelte';
   import BookmarkList from './lib/features/bookmarks/BookmarkList.svelte';
   import AllTaggedBookmarkList from './lib/features/bookmarks/AllTaggedBookmarkList.svelte';
   import TagCatalogueView from './lib/features/tags/TagCatalogueView.svelte';
@@ -20,6 +21,7 @@
   import { BookmarkMutations } from './lib/queries/mutations';
   import { TagCatalogue } from './lib/queries/tags';
   import { unsupportedTagMessage } from './lib/state/bookmarkFilters';
+  import type { Bookmark } from './lib/api/types';
   import { ACCOUNT_QUERY_KEY, createAppQueryClient } from './lib/state/queryClient';
   import { applyDisplay, clearDisplayListener } from './lib/state/display';
   import {
@@ -44,6 +46,8 @@
   let navigationState: NavigationState = $state(defaultNavigationState);
   let searchDraft = $state('');
   let addDialogOpen = $state(false);
+  let editBookmark = $state<Bookmark | null>(null);
+  let editDialogOpen = $state(false);
   let displayError = $state('');
   let connectionWarning = $state('');
   let filterError = $state('');
@@ -119,7 +123,35 @@
         tagSuggestions = snapshot.tags.map((tag) => tag.name);
       })
       .catch(() => {
-        tagSuggestions = [];
+        tagSuggestions = tagCatalogue?.snapshot.tags.map((tag) => tag.name) ?? [];
+      });
+  }
+
+  function openTagEditor(bookmark: Bookmark) {
+    if (sessionState.kind !== 'ready' || !tagCatalogue || !bookmarkMutations) return;
+    editBookmark = bookmark;
+    editDialogOpen = true;
+  }
+
+  function closeTagEditor() {
+    editDialogOpen = false;
+    editBookmark = null;
+  }
+
+  function handleTagsSaved() {
+    if (sessionState.kind !== 'ready' || !tagCatalogue) return;
+    const savedGeneration = sessionState.generation;
+    refreshToken += 1;
+    tagCatalogue.invalidateAfterConfirmedMutation(true);
+    void tagCatalogue
+      .load(savedGeneration)
+      .then((snapshot) => {
+        if (sessionState.kind === 'ready' && sessionState.generation === savedGeneration)
+          tagSuggestions = snapshot.tags.map((tag) => tag.name);
+      })
+      .catch(() => {
+        if (sessionState.kind === 'ready' && sessionState.generation === savedGeneration)
+          tagSuggestions = tagCatalogue?.snapshot.tags.map((tag) => tag.name) ?? [];
       });
   }
 
@@ -338,6 +370,7 @@
         scope={navigationState.scope}
         query={navigationState.search}
         mutations={bookmarkMutations ?? undefined}
+        {openTagEditor}
         {refreshToken}
       />
     {:else if navigationState.view === 'all-tagged'}
@@ -354,6 +387,7 @@
         query={navigationState.search}
         tag={navigationState.tag ?? undefined}
         mutations={bookmarkMutations ?? undefined}
+        {openTagEditor}
         {refreshToken}
       />
     {:else}
@@ -387,3 +421,16 @@
   suggestions={tagSuggestions}
   onClose={() => (addDialogOpen = false)}
 />
+
+{#if editBookmark && tagCatalogue && bookmarkMutations && sessionState.kind === 'ready'}
+  <EditTagsDialog
+    open={editDialogOpen}
+    bookmark={editBookmark}
+    generation={sessionState.generation}
+    replaceBookmarkTags={bookmarkMutations.replaceBookmarkTags}
+    catalogue={tagCatalogue}
+    suggestions={tagSuggestions}
+    onClose={closeTagEditor}
+    onSaved={handleTagsSaved}
+  />
+{/if}
