@@ -35,6 +35,7 @@
         type="search"
         placeholder={searchPlaceholder}
         aria-label={searchLabel}
+        data-app-search
       />
     </label>
     {#if children}

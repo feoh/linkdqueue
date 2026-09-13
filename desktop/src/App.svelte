@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* global HTMLInputElement, KeyboardEvent, document, window */
   import { onMount } from 'svelte';
 
   import { createTauriBridge, type LinkdqueueBridge } from './lib/api/bridge';
@@ -24,6 +25,7 @@
   import type { Bookmark } from './lib/api/types';
   import { ACCOUNT_QUERY_KEY, createAppQueryClient } from './lib/state/queryClient';
   import { applyDisplay, clearDisplayListener } from './lib/state/display';
+  import { listenForMenuEvents, MENU_EVENTS } from './lib/menu';
   import {
     createSessionController,
     initialSessionState,
@@ -53,6 +55,38 @@
   let filterError = $state('');
   let refreshToken = $state(0);
   let lastClearGeneration = $state<number | null>(null);
+
+  function workflowActionsAllowed(): boolean {
+    return sessionState.kind !== 'loading' && !addDialogOpen && !editDialogOpen;
+  }
+
+  function handleMenuNewBookmark() {
+    if (workflowActionsAllowed()) openAddBookmark();
+  }
+
+  function handleMenuSearch() {
+    if (!workflowActionsAllowed()) return;
+    document.querySelector<HTMLInputElement>('[data-app-search]')?.focus();
+  }
+
+  function handleMenuRefresh() {
+    if (workflowActionsAllowed()) refreshToken += 1;
+  }
+
+  function handleMenuSettings() {
+    if (workflowActionsAllowed()) selectView('settings');
+  }
+
+  function isTauriRuntime(): boolean {
+    return '__TAURI_INTERNALS__' in globalThis;
+  }
+
+  const workflowMenuShortcutKeys = new Set(['n', 'f', 'r', 'q', ',']);
+
+  function suppressMenuShortcut(event: KeyboardEvent) {
+    if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+    if (workflowMenuShortcutKeys.has(event.key.toLowerCase())) event.preventDefault();
+  }
 
   const navigationItems: Array<{ id: NavigationView; label: string }> = [
     { id: 'queue', label: 'Queue' },
@@ -103,9 +137,33 @@
       navigationState = next;
       searchDraft = next.search;
     });
+    let menuDisposed = false;
+    let menuUnlisteners: Array<() => void> = [];
+    const nativeMenu = isTauriRuntime();
+    if (nativeMenu) {
+      window.addEventListener('keydown', suppressMenuShortcut);
+      void listenForMenuEvents({
+        [MENU_EVENTS.newBookmark]: handleMenuNewBookmark,
+        [MENU_EVENTS.search]: handleMenuSearch,
+        [MENU_EVENTS.refresh]: handleMenuRefresh,
+        [MENU_EVENTS.settings]: handleMenuSettings,
+      })
+        .then((unlisteners) => {
+          if (menuDisposed) unlisteners.forEach((unlisten) => unlisten());
+          else menuUnlisteners = unlisteners;
+        })
+        .catch(() => {
+          // The browser preview has no native event transport; native builds do.
+        });
+    }
+
     void controller.bootstrap();
 
     return () => {
+      menuDisposed = true;
+      menuUnlisteners.forEach((unlisten) => unlisten());
+      menuUnlisteners = [];
+      if (nativeMenu) window.removeEventListener('keydown', suppressMenuShortcut);
       unsubscribeSession();
       unsubscribeNavigation();
       controller.destroy();

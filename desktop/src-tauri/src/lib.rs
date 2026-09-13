@@ -5,6 +5,7 @@ pub mod credentials;
 pub mod domain;
 pub mod error;
 pub mod http;
+pub mod menu;
 pub mod opener;
 pub mod preferences;
 pub mod session;
@@ -14,6 +15,10 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             use tauri::Manager;
+
+            let native_menu = menu::build_menu(app)?;
+            app.set_menu(native_menu)?;
+            app.on_menu_event(menu::handle_menu_event);
 
             let config_dir = app
                 .path()

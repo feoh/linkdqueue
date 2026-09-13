@@ -67,6 +67,25 @@ describe('AddBookmarkDialog', () => {
     resolve(confirmed());
   });
 
+  it('keeps a dirty draft on Escape when discard is declined', async () => {
+    const onClose = vi.fn();
+    render(AddBookmarkDialog, {
+      props: { open: true, createBookmark: vi.fn(), onClose },
+    });
+    await fireEvent.input(screen.getByLabelText(/URL/), {
+      target: { value: 'https://example.test' },
+    });
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(false);
+
+    await fireEvent.keyDown(screen.getByRole('dialog', { name: 'Add bookmark' }), {
+      key: 'Escape',
+    });
+
+    expect(globalThis.confirm).toHaveBeenCalledWith('Discard this bookmark draft?');
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/URL/)).toHaveValue('https://example.test');
+  });
+
   it('deduplicates repeated exact tag names and resets a discarded draft', async () => {
     const onChange = vi.fn();
     render(TagInput, {
