@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { LinkdqueueBridge } from '../../api/bridge';
@@ -175,7 +176,7 @@ describe('EditTagsDialog', () => {
     });
     resolve(confirmed());
 
-    await new Promise((finish) => setTimeout(finish, 0));
+    await tick();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove current' })).toBeInTheDocument();
   });
