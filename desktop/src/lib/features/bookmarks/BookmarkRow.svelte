@@ -10,7 +10,6 @@
   let {
     bookmark,
     generation,
-    scope,
     openExternalUrl,
     mutations,
     openTagEditor,
@@ -171,7 +170,7 @@
     {#each bookmark.tag_names as tag, index (index)}<span class="bookmark-tag">#{tag}</span>{/each}
   </div>
   <div class="bookmark-actions" aria-label={`Actions for ${title}`}>
-    {#if bookmark.unread && scope !== 'archive'}
+    {#if bookmark.unread}
       <button
         class="secondary-button"
         type="button"

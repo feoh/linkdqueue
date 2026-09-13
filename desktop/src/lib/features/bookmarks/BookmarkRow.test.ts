@@ -96,6 +96,27 @@ describe('BookmarkRow', () => {
     },
   );
 
+  it('shows Mark as read for an unread archived bookmark in Archive scope and marks it once', async () => {
+    const actionMutations = mutations();
+    render(BookmarkRow, {
+      props: {
+        bookmark,
+        generation: 7,
+        scope: 'archive',
+        openExternalUrl: vi.fn(),
+        mutations: actionMutations,
+      },
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark as read' }));
+
+    await waitFor(() => expect(actionMutations.markRead).toHaveBeenCalledTimes(1));
+    expect(actionMutations.markRead).toHaveBeenCalledWith(bookmark.id, true);
+    expect(actionMutations.archive).not.toHaveBeenCalled();
+    expect(actionMutations.unarchive).not.toHaveBeenCalled();
+    expect(actionMutations.delete).not.toHaveBeenCalled();
+  });
+
   it('sends one contextual mutation, preserves browser and tag clicks, and announces success', async () => {
     const actionMutations = mutations();
     const openTagEditor = vi.fn();
