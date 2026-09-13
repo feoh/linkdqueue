@@ -1,0 +1,488 @@
+---
+name: Desktop candidate
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 40-character immutable commit SHA to build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-candidate-${{ inputs.commit_sha }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate candidate source and contracts
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          persist-credentials: false
+
+      - name: Verify immutable checkout and versions
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          node <<'NODE'
+          const fs = require('node:fs');
+          const packageVersion = JSON.parse(
+            fs.readFileSync('package.json'),
+          ).version;
+          const tauriVersion = JSON.parse(
+            fs.readFileSync('src-tauri/tauri.conf.json'),
+          ).version;
+          const cargoText = fs.readFileSync('src-tauri/Cargo.toml', 'utf8');
+          const cargoVersion = cargoText.match(
+            /\[package\][\s\S]*?version = "([^"]+)"/,
+          )[1];
+          if (
+            new Set([packageVersion, tauriVersion, cargoVersion]).size !== 1
+          ) {
+            // All three manifests must identify the same candidate.
+            throw new Error(
+              `Version mismatch: npm=${packageVersion} tauri=${tauriVersion}` +
+                ` cargo=${cargoVersion}`,
+            );
+          }
+          console.log(JSON.stringify({
+            packageVersion, tauriVersion, cargoVersion,
+          }));
+          NODE
+
+      - name: Install Linux Tauri prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential curl file libayatana-appindicator3-dev libssl-dev \
+            libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf wget
+        working-directory: .
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            desktop/src-tauri/target
+          key: >-
+            desktop-candidate-cargo-${{ runner.os }}-rust-1.92.0-${{
+            hashFiles('desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            desktop-candidate-cargo-${{ runner.os }}-rust-1.92.0-
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Validate frontend
+        run: |
+          npm run format:check
+          npm run lint
+          npm run check
+          npm run test:unit
+          npm run test:contracts
+          npm run build
+
+      - name: Validate Rust
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+          cargo clippy --manifest-path src-tauri/Cargo.toml \
+            --all-targets -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml \
+            --all-targets --all-features
+
+  linux:
+    name: Build Linux x86_64 candidate bundles
+    needs: validate
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          persist-credentials: false
+
+      - name: Install Linux Tauri prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential curl file libayatana-appindicator3-dev libssl-dev \
+            libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf wget \
+            xdg-utils
+        working-directory: .
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build unsigned candidate bundles
+        run: npm run tauri -- build --bundles appimage,deb --ci --no-sign
+
+      - name: Inspect Linux artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          appimage=(src-tauri/target/release/bundle/appimage/*.AppImage)
+          deb=(src-tauri/target/release/bundle/deb/*.deb)
+          test "${#appimage[@]}" -eq 1
+          test "${#deb[@]}" -eq 1
+          file "${appimage[0]}" | grep -E 'ELF 64-bit.*x86-64'
+          test "$(dpkg-deb -f "${deb[0]}" Version)" = '2.0.0'
+          test "$(dpkg-deb -f "${deb[0]}" Architecture)" = 'amd64'
+          mkdir -p candidate-assets
+          cp "${appimage[0]}" candidate-assets/
+          cp "${deb[0]}" candidate-assets/
+          sha256sum candidate-assets/* | tee linux-x86_64-artifacts.sha256
+
+      - name: Upload unsigned Linux candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkdqueue-candidate-linux-x86_64-${{ inputs.commit_sha }}
+          if-no-files-found: error
+          path: |
+            desktop/candidate-assets/*
+            desktop/linux-x86_64-artifacts.sha256
+
+  macos:
+    name: Build macOS ${{ matrix.architecture }} candidate bundles
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: arm64
+            runner: macos-14
+            target: aarch64-apple-darwin
+          - architecture: x86_64
+            runner: macos-13
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          targets: ${{ matrix.target }}
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Record macOS Keychain backend and compile it
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo tree --manifest-path src-tauri/Cargo.toml \
+            --target '${{ matrix.target }}' -e features \
+            | tee "macos-${{ matrix.architecture }}-keychain-tree.txt"
+          grep -E 'keyring v3\.6\.3|security-framework' \
+            "macos-${{ matrix.architecture }}-keychain-tree.txt"
+          cargo check --manifest-path src-tauri/Cargo.toml \
+            --target '${{ matrix.target }}'
+
+      - name: Build unsigned candidate bundles
+        run: >-
+          npm run tauri -- build --ci --no-sign --target '${{ matrix.target }}'
+          --bundles app,dmg
+
+      - name: Inspect macOS artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle_root="src-tauri/target/${{ matrix.target }}/release/bundle"
+          if [[ ! -d "$bundle_root" ]]; then
+            bundle_root="src-tauri/target/release/bundle"
+          fi
+          apps=("$bundle_root"/macos/*.app)
+          dmgs=("$bundle_root"/dmg/*.dmg)
+          test "${#apps[@]}" -eq 1 && test -d "${apps[0]}"
+          test "${#dmgs[@]}" -eq 1 && test -f "${dmgs[0]}"
+          ./scripts/validate-macos-bundle.sh '${{ matrix.architecture }}' \
+            "${apps[0]}" "${dmgs[0]}" | tee \
+            "macos-${{ matrix.architecture }}-bundle-evidence.txt"
+          mkdir -p candidate-assets
+          artifact_prefix="candidate-assets/linkdqueue-desktop-macos-"
+          artifact_prefix="${artifact_prefix}${{ matrix.architecture }}"
+          ditto "${apps[0]}" "${artifact_prefix}-unsigned.app"
+          cp "${dmgs[0]}" "${artifact_prefix}-unsigned.dmg"
+          shasum -a 256 candidate-assets/* \
+            | tee "macos-${{ matrix.architecture }}-artifacts.sha256"
+
+      - name: Upload unsigned macOS candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: >-
+            ${{ format('linkdqueue-candidate-macos-{0}-{1}',
+            matrix.architecture, inputs.commit_sha) }}
+          if-no-files-found: error
+          path: |
+            desktop/candidate-assets/*
+            desktop/macos-${{ matrix.architecture }}-keychain-tree.txt
+            desktop/macos-${{ matrix.architecture }}-bundle-evidence.txt
+            desktop/macos-${{ matrix.architecture }}-artifacts.sha256
+
+  windows:
+    name: Build Windows x86_64 NSIS candidate installer
+    needs: validate
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Record Windows Credential Manager backend and compile it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cargo tree --manifest-path src-tauri/Cargo.toml `
+            --target x86_64-pc-windows-msvc -e features `
+            | Tee-Object -FilePath windows-x86_64-keyring-tree.txt
+          Select-String -Path windows-x86_64-keyring-tree.txt `
+            -Pattern 'keyring v3\.6\.3|windows-sys'
+          cargo check --manifest-path src-tauri/Cargo.toml `
+            --target x86_64-pc-windows-msvc
+
+      - name: Build unsigned NSIS candidate installer
+        run: >-
+          npm run tauri -- build --ci --no-sign
+          --target x86_64-pc-windows-msvc --bundles nsis
+
+      - name: Inspect Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle_root = 'src-tauri/target/'
+          $bundle_root += 'x86_64-pc-windows-msvc/release/bundle/nsis'
+          if (-not (Test-Path $bundle_root)) {
+            $bundle_root = 'src-tauri/target/release/bundle/nsis'
+          }
+          $installers = @(Get-ChildItem "$bundle_root/*.exe")
+          if ($installers.Count -ne 1) {
+            throw "Expected one NSIS installer, got $($installers.Count)"
+          }
+          $installer = $installers[0]
+          $bytes = [IO.File]::ReadAllBytes($installer.FullName)
+          if ($bytes.Length -lt 0x40 -or $bytes[0] -ne 0x4d -or
+              $bytes[1] -ne 0x5a) {
+            throw 'Installer is not a PE file'
+          }
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length -or
+              $bytes[$peOffset] -ne 0x50 -or $bytes[$peOffset + 1] -ne 0x45) {
+            throw 'Installer has no PE signature'
+          }
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($machine -ne 0x8664) {
+            throw "Expected x86_64 PE machine, got 0x$('{0:x4}' -f $machine)"
+          }
+          $version = $installer.VersionInfo.FileVersion
+          if ($version -notmatch '^2\.0\.0') {
+            throw "Unexpected installer version: $version"
+          }
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          $signature_status = $signature.Status
+          New-Item -ItemType Directory -Force candidate-assets | Out-Null
+          Copy-Item $installer.FullName candidate-assets/
+          $metadata = [PSCustomObject]@{
+            Path = $installer.Name
+            Architecture = 'x86_64 (PE 0x8664)'
+            FileVersion = $version
+            SignatureStatus = $signature_status
+          }
+          $metadata | ConvertTo-Json `
+            | Set-Content windows-x86_64-installer-evidence.json
+          $metadata | Format-List
+          Get-FileHash $installer.FullName -Algorithm SHA256 `
+            | Tee-Object -FilePath windows-x86_64-installer.sha256
+
+      - name: Upload unsigned Windows candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkdqueue-candidate-windows-x86_64-${{ inputs.commit_sha }}
+          if-no-files-found: error
+          path: |
+            desktop/candidate-assets/*
+            desktop/windows-x86_64-keyring-tree.txt
+            desktop/windows-x86_64-installer.sha256
+            desktop/windows-x86_64-installer-evidence.json
+
+  manifest:
+    name: Assemble candidate manifest
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha }}
+          persist-credentials: false
+
+      - name: Download platform candidate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: linkdqueue-candidate-linux-x86_64-${{ inputs.commit_sha }}
+          path: candidate-assets/linux
+
+      - name: Download macOS arm64 candidate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: linkdqueue-candidate-macos-arm64-${{ inputs.commit_sha }}
+          path: candidate-assets/macos-arm64
+
+      - name: Download macOS x86_64 candidate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: linkdqueue-candidate-macos-x86_64-${{ inputs.commit_sha }}
+          path: candidate-assets/macos-x86_64
+
+      - name: Download Windows candidate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: linkdqueue-candidate-windows-x86_64-${{ inputs.commit_sha }}
+          path: candidate-assets/windows
+
+      - name: Create checksummed candidate manifest
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ inputs.commit_sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+
+          root = pathlib.Path('candidate-assets')
+          assets = []
+          for path in sorted(p for p in root.rglob('*') if p.is_file()):
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              assets.append({
+                  'path': str(path),
+                  'sha256': digest,
+                  'signing': 'unsigned',
+              })
+
+          versions = {
+              'npm': json.loads(
+                  Path('desktop/package.json').read_text()
+              )['version'],
+              'tauri': json.loads(
+                  Path('desktop/src-tauri/tauri.conf.json').read_text()
+              )['version'],
+          }
+          sha = os.environ['CANDIDATE_SHA']
+          manifest = {
+              'schemaVersion': 1,
+              'commit': sha,
+              'workflow': {
+                  'runId': os.environ['RUN_ID'],
+                  'attempt': os.environ['RUN_ATTEMPT'],
+                  'artifacts': {
+                      'linux': f'linkdqueue-candidate-linux-x86_64-{sha}',
+                      'macosArm64': f'linkdqueue-candidate-macos-arm64-{sha}',
+                      'macosX86_64': f'linkdqueue-candidate-macos-x86_64-{sha}',
+                      'windows': f'linkdqueue-candidate-windows-x86_64-{sha}',
+                  },
+              },
+              'version': versions['npm'],
+              'toolchains': {'node': '24.15.0', 'rust': '1.92.0'},
+              'signing': 'unsigned',
+              'assets': assets,
+          }
+          if versions['npm'] != versions['tauri'] or versions['npm'] != '2.0.0':
+              raise SystemExit(f'Unexpected version metadata: {versions}')
+          pathlib.Path('candidate-manifest.json').write_text(
+              json.dumps(manifest, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
+          sha256sum candidate-manifest.json | tee candidate-manifest.sha256
+
+      - name: Upload candidate manifest only
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkdqueue-candidate-manifest-${{ inputs.commit_sha }}
+          if-no-files-found: error
+          path: |
+            candidate-manifest.json
+            candidate-manifest.sha256
