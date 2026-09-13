@@ -47,5 +47,7 @@ app.*.map.json
 # Tauri/Svelte desktop artifacts
 /desktop/node_modules/
 /desktop/dist/
+/desktop/test-results/
+/desktop/playwright-report/
 /desktop/src-tauri/target/
 /desktop/src-tauri/gen/

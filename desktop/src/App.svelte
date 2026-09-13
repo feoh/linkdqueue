@@ -485,7 +485,8 @@
     open={editDialogOpen}
     bookmark={editBookmark}
     generation={sessionState.generation}
-    replaceBookmarkTags={bookmarkMutations.replaceBookmarkTags}
+    replaceBookmarkTags={(bookmarkId, tagNames) =>
+      bookmarkMutations!.replaceBookmarkTags(bookmarkId, tagNames)}
     catalogue={tagCatalogue}
     suggestions={tagSuggestions}
     onClose={closeTagEditor}
