@@ -445,10 +445,10 @@ jobs:
 
           versions = {
               'npm': json.loads(
-                  Path('desktop/package.json').read_text()
+                  pathlib.Path('desktop/package.json').read_text()
               )['version'],
               'tauri': json.loads(
-                  Path('desktop/src-tauri/tauri.conf.json').read_text()
+                  pathlib.Path('desktop/src-tauri/tauri.conf.json').read_text()
               )['version'],
           }
           sha = os.environ['CANDIDATE_SHA']
