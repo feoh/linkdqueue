@@ -170,7 +170,7 @@ describe('BookmarkList', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Article' });
-    expect(screen.queryByRole('button', { name: 'Mark as read' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark as read' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Archive' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit tags' })).toBeInTheDocument();
