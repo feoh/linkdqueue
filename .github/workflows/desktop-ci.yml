@@ -283,3 +283,91 @@ jobs:
             desktop/src-tauri/target/release/bundle/appimage/*.AppImage
             desktop/src-tauri/target/release/bundle/deb/*.deb
             desktop/linux-artifacts.sha256
+
+  macos-bundle:
+    name: Build macOS ${{ matrix.architecture }} candidate bundles (unsigned)
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-14 is the hosted Apple Silicon runner; macos-13 is Intel.
+          - architecture: arm64
+            runner: macos-14
+            target: aarch64-apple-darwin
+          - architecture: x86_64
+            runner: macos-13
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          targets: ${{ matrix.target }}
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Record macOS Keychain backend and compile it
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo tree --manifest-path src-tauri/Cargo.toml --target '${{ matrix.target }}' \
+            -e features | tee "macos-${{ matrix.architecture }}-keychain-tree.txt"
+          grep -E 'keyring v3\.6\.3|security-framework' \
+            "macos-${{ matrix.architecture }}-keychain-tree.txt"
+          cargo check --manifest-path src-tauri/Cargo.toml \
+            --target '${{ matrix.target }}'
+
+      - name: Build unsigned developer bundles
+        run: >-
+          npm run tauri -- build --ci --no-sign --target '${{ matrix.target }}'
+          --bundles app,dmg
+
+      - name: Inspect architecture and Info.plist
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle_root="src-tauri/target/${{ matrix.target }}/release/bundle"
+          if [[ ! -d "$bundle_root" ]]; then
+            bundle_root="src-tauri/target/release/bundle"
+          fi
+          apps=("$bundle_root"/macos/*.app)
+          dmgs=("$bundle_root"/dmg/*.dmg)
+          test "${#apps[@]}" -eq 1 && test -d "${apps[0]}"
+          test "${#dmgs[@]}" -eq 1 && test -f "${dmgs[0]}"
+          ./scripts/validate-macos-bundle.sh '${{ matrix.architecture }}' \
+            "${apps[0]}" "${dmgs[0]}" | tee \
+            "macos-${{ matrix.architecture }}-bundle-evidence.txt"
+          mkdir -p macos-artifacts
+          ditto "${apps[0]}" \
+            "macos-artifacts/linkdqueue-desktop-macos-${{ matrix.architecture }}-developer-unsigned.app"
+          cp "${dmgs[0]}" \
+            "macos-artifacts/linkdqueue-desktop-macos-${{ matrix.architecture }}-developer-unsigned.dmg"
+          shasum -a 256 macos-artifacts/* \
+            | tee "macos-${{ matrix.architecture }}-artifacts.sha256"
+
+      - name: Upload unsigned developer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkdqueue-macos-${{ matrix.architecture }}-developer-unsigned-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            desktop/macos-artifacts/*
+            desktop/macos-${{ matrix.architecture }}-keychain-tree.txt
+            desktop/macos-${{ matrix.architecture }}-bundle-evidence.txt
+            desktop/macos-${{ matrix.architecture }}-artifacts.sha256

@@ -31,6 +31,10 @@
     "targets": ["appimage", "deb", "nsis", "dmg"],
     "icon": ["icons/icon.png"],
     "category": "Utility",
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "entitlements": "entitlements/macos.plist"
+    },
     "linux": {
       "deb": {
         "depends": ["libayatana-appindicator3-1", "libsecret-1-0"]
