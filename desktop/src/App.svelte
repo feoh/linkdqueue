@@ -5,6 +5,7 @@
   import AppShell from './lib/components/AppShell.svelte';
   import AddBookmarkDialog from './lib/features/bookmarks/AddBookmarkDialog.svelte';
   import BookmarkList from './lib/features/bookmarks/BookmarkList.svelte';
+  import AllTaggedBookmarkList from './lib/features/bookmarks/AllTaggedBookmarkList.svelte';
   import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
   import ConnectionForm from './lib/features/settings/ConnectionForm.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
@@ -17,6 +18,7 @@
   } from './lib/state/navigation';
   import { BookmarkMutations } from './lib/queries/mutations';
   import { TagCatalogue } from './lib/queries/tags';
+  import { unsupportedTagMessage } from './lib/state/bookmarkFilters';
   import { ACCOUNT_QUERY_KEY, createAppQueryClient } from './lib/state/queryClient';
   import { applyDisplay, clearDisplayListener } from './lib/state/display';
   import {
@@ -39,9 +41,12 @@
 
   let sessionState: SessionState = $state(initialSessionState);
   let navigationState: NavigationState = $state(defaultNavigationState);
+  let searchDraft = $state('');
   let addDialogOpen = $state(false);
   let displayError = $state('');
   let connectionWarning = $state('');
+  let filterError = $state('');
+  let refreshToken = $state(0);
   let lastClearGeneration = $state<number | null>(null);
 
   const navigationItems: Array<{ id: NavigationView; label: string }> = [
@@ -71,6 +76,16 @@
         applyDisplay(next.settings.display);
       if (next.kind === 'ready' || next.kind === 'unconfigured') displayError = '';
       const generation = next.kind === 'ready' ? next.generation : null;
+      if (next.kind === 'ready' && tagCatalogue) {
+        void tagCatalogue
+          .load(next.generation)
+          .then((snapshot) => {
+            tagSuggestions = snapshot.tags.map((tag) => tag.name);
+          })
+          .catch(() => {
+            tagSuggestions = [];
+          });
+      }
       if (
         next.kind === 'unconfigured' ||
         next.kind === 'error' ||
@@ -82,6 +97,7 @@
     });
     const unsubscribeNavigation = navigation.subscribe((next) => {
       navigationState = next;
+      searchDraft = next.search;
     });
     void controller.bootstrap();
 
@@ -112,8 +128,23 @@
     navigation.set({
       view: nextView,
       scope: nextView === 'queue' ? 'queue' : nextView === 'archive' ? 'archive' : null,
-      tag: null,
+      tag: navigationState.tag,
     });
+  }
+
+  function chooseTag(tag: string) {
+    const message = unsupportedTagMessage(tag);
+    if (message) {
+      filterError = `${message} Choose another tag from the catalogue.`;
+      return;
+    }
+    filterError = '';
+    navigation.set({ ...navigationState, tag });
+  }
+
+  function clearTag() {
+    filterError = '';
+    navigation.set({ ...navigationState, tag: null });
   }
 
   function activeTitle() {
@@ -169,8 +200,11 @@
   <Toolbar
     eyebrow={sessionState.kind === 'ready' ? 'Connected' : 'Desktop preview'}
     title={activeTitle()}
-    searchValue={navigationState.search}
-    onSearch={(search) => navigation.setSearch(search)}
+    searchValue={searchDraft}
+    onSearch={(search) => {
+      searchDraft = search;
+      navigation.setSearch(search);
+    }}
   >
     <button
       class="secondary-button"
@@ -181,6 +215,44 @@
       New bookmark
     </button>
   </Toolbar>
+
+  {#if navigationState.scope}
+    <nav class="filter-controls" aria-label="Bookmark filters">
+      <button
+        class="secondary-button"
+        type="button"
+        aria-label="Set scope to Queue"
+        onclick={() => navigation.set({ ...navigationState, scope: 'queue' })}
+        aria-pressed={navigationState.scope === 'queue'}>Queue</button
+      >
+      <button
+        class="secondary-button"
+        type="button"
+        aria-label="Set scope to Archive"
+        onclick={() => navigation.set({ ...navigationState, scope: 'archive' })}
+        aria-pressed={navigationState.scope === 'archive'}>Archive</button
+      >
+      {#if navigationState.tag}
+        <button class="tag-chip" type="button" onclick={clearTag}
+          >Tag: {navigationState.tag} ×</button
+        >
+      {/if}
+      {#if tagSuggestions.length}
+        <select
+          aria-label="Filter by tag"
+          value={navigationState.tag ?? ''}
+          onchange={(event) => event.currentTarget.value && chooseTag(event.currentTarget.value)}
+        >
+          <option value="">All tags</option>
+          {#each tagSuggestions as tag (tag)}<option value={tag}>{tag}</option>{/each}
+        </select>
+      {/if}
+      <button class="secondary-button" type="button" onclick={() => (refreshToken += 1)}
+        >Refresh</button
+      >
+    </nav>
+  {/if}
+  {#if filterError}<p class="preference-error" role="alert">{filterError}</p>{/if}
 
   {#if sessionState.kind === 'loading'}
     <StatusMessage
@@ -217,6 +289,19 @@
         clearConnection={clearConfiguredConnection}
       />
       <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
+    {:else if sessionState.kind === 'ready' && navigationState.view === 'all-tagged' && navigationState.tag}
+      <AllTaggedBookmarkList
+        {bridge}
+        generation={sessionState.generation}
+        tag={navigationState.tag}
+        {refreshToken}
+      />
+    {:else if navigationState.view === 'all-tagged'}
+      <StatusMessage
+        variant="info"
+        title="Choose a tag"
+        message="All tagged requires an explicit tag; choose one from Queue or Archive first."
+      />
     {:else if sessionState.kind === 'ready' && navigationState.scope}
       <BookmarkList
         {bridge}
@@ -224,6 +309,7 @@
         scope={navigationState.scope}
         query={navigationState.search}
         tag={navigationState.tag ?? undefined}
+        {refreshToken}
       />
     {:else}
       <StatusMessage
@@ -245,8 +331,8 @@
     <p class="preference-error" role="alert">{displayError}</p>
   {/if}
 
-  {#if navigationState.search}
-    <p class="draft-note" role="status">Search draft: <strong>{navigationState.search}</strong></p>
+  {#if searchDraft}
+    <p class="draft-note" role="status">Search draft: <strong>{searchDraft}</strong></p>
   {/if}
 </AppShell>
 

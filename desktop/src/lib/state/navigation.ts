@@ -1,6 +1,7 @@
 import { writable, type Readable } from 'svelte/store';
 
 import type { BookmarkScope } from '../api/types';
+import { BOOKMARK_SEARCH_DEBOUNCE_MS } from './bookmarkFilters';
 
 export type NavigationView = 'queue' | 'archive' | 'tags' | 'all-tagged' | 'settings';
 
@@ -27,12 +28,13 @@ function viewScope(view: NavigationView): BookmarkScope | null {
 }
 
 export function encodeNavigationHash(
-  state: Pick<NavigationState, 'view' | 'scope' | 'tag'>,
+  state: Pick<NavigationState, 'view' | 'scope' | 'tag'> & Partial<Pick<NavigationState, 'search'>>,
 ): string {
   const params = new URLSearchParams();
   const scope = viewScope(state.view) ?? state.scope;
   if (scope) params.set('scope', scope);
-  if (state.tag && state.view === 'all-tagged') params.set('tag', state.tag);
+  if (state.tag) params.set('tag', state.tag);
+  if (state.search) params.set('q', state.search);
 
   const query = params.toString();
   return `#/${state.view}${query ? `?${query}` : ''}`;
@@ -48,9 +50,10 @@ export function decodeNavigationHash(hash: string): NavigationState {
   const scope =
     viewScope(view) ??
     (requestedScope === 'archive' ? 'archive' : requestedScope === 'queue' ? 'queue' : null);
-  const tag = view === 'all-tagged' ? params.get('tag') : null;
+  const tag = params.get('tag');
+  const search = params.get('q') ?? '';
 
-  return { view, scope, tag, search: '' };
+  return { view, scope, tag, search };
 }
 
 export function createNavigationState(initialHash = ''): Readable<NavigationState> & {
@@ -62,12 +65,19 @@ export function createNavigationState(initialHash = ''): Readable<NavigationStat
   const initial = initialHash ? decodeNavigationHash(initialHash) : DEFAULT_NAVIGATION;
   const state = writable<NavigationState>(initial);
   let current = initial;
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const cancelSearch = () => {
+    if (searchTimer !== null) clearTimeout(searchTimer);
+    searchTimer = null;
+  };
 
   const unsubscribe = state.subscribe((next) => {
     current = next;
   });
 
   function publishHash(next: Pick<NavigationState, 'view' | 'scope' | 'tag'>) {
+    cancelSearch();
     const nextState = { ...current, ...next, search: current.search };
     state.set(nextState);
     if (typeof window !== 'undefined') {
@@ -76,8 +86,8 @@ export function createNavigationState(initialHash = ''): Readable<NavigationStat
   }
 
   function syncHash() {
-    if (typeof window !== 'undefined')
-      state.set({ ...decodeNavigationHash(window.location.hash), search: current.search });
+    if (typeof window !== 'undefined') cancelSearch();
+    state.set(decodeNavigationHash(window.location.hash));
   }
 
   if (typeof window !== 'undefined') {
@@ -88,10 +98,23 @@ export function createNavigationState(initialHash = ''): Readable<NavigationStat
   return {
     subscribe: state.subscribe,
     set: publishHash,
-    setSearch: (search) => state.set({ ...current, search }),
-    resetSearch: () => state.set({ ...current, search: '' }),
+    setSearch: (search) => {
+      cancelSearch();
+      searchTimer = setTimeout(() => {
+        searchTimer = null;
+        const next = { ...current, search: search.trim() };
+        state.set(next);
+        if (typeof window !== 'undefined')
+          window.history.pushState({}, '', encodeNavigationHash(next));
+      }, BOOKMARK_SEARCH_DEBOUNCE_MS);
+    },
+    resetSearch: () => {
+      cancelSearch();
+      state.set({ ...current, search: '' });
+    },
     destroy: () => {
       unsubscribe();
+      cancelSearch();
       if (typeof window !== 'undefined') {
         window.removeEventListener('hashchange', syncHash);
         window.removeEventListener('popstate', syncHash);

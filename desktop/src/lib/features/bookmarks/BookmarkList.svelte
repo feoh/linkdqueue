@@ -13,6 +13,7 @@
     query = '',
     tag,
     actions,
+    refreshToken = 0,
   }: {
     bridge: LinkdqueueBridge;
     generation: Generation;
@@ -20,6 +21,7 @@
     query?: string;
     tag?: string;
     actions?: Snippet<[Bookmark]>;
+    refreshToken?: number;
   } = $props();
 
   let pager = $state<BookmarkPager | null>(null);
@@ -35,6 +37,8 @@
   let requestError = $state<unknown>(null);
   let sentinel: globalThis.Element;
   let observer: InstanceType<typeof globalThis.IntersectionObserver> | undefined;
+  let filterKey = '';
+  let seenRefreshToken = $state(0);
 
   function refreshPager(
     nextGeneration = generation,
@@ -69,7 +73,27 @@
   }
 
   $effect(() => {
-    refreshPager(generation, scope, query, tag);
+    const nextKey = `${generation}|${scope}|${query}|${tag ?? ''}`;
+    if (nextKey !== filterKey) {
+      filterKey = nextKey;
+      refreshPager(generation, scope, query, tag);
+    } else if (refreshToken !== seenRefreshToken) {
+      seenRefreshToken = refreshToken;
+      void pager?.refresh().then(
+        () => {
+          if (pager) {
+            snapshot = pager.snapshot;
+            requestError = null;
+          }
+        },
+        (error: unknown) => {
+          if (pager) {
+            snapshot = pager.snapshot;
+            requestError = error;
+          }
+        },
+      );
+    }
   });
 
   async function loadMore() {
