@@ -65,7 +65,9 @@ GoRouter appRouter(Ref ref) {
         routes: [
           GoRoute(
             path: '/queue',
-            builder: (context, state) => const QueueScreen(),
+            builder: (context, state) => QueueScreen(
+              initialTag: state.uri.queryParameters['tag'],
+            ),
           ),
           GoRoute(
             path: '/archive',

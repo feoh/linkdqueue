@@ -48,12 +48,13 @@ class LinkdingApiClient {
     ];
     final q = parts.join(' ').trim();
 
+    final endpoint =
+        isArchived == true ? 'api/bookmarks/archived/' : 'api/bookmarks/';
+
     final response = await _dio.get(
-      'api/bookmarks/',
+      endpoint,
       queryParameters: {
         if (q.isNotEmpty) 'q': q,
-        if (isArchived != null) 'is_archived': isArchived ? 1 : 0,
-        if (isRead != null) 'is_read': isRead ? 1 : 0,
         'limit': limit,
         'offset': offset,
       },
