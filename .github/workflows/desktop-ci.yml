@@ -326,8 +326,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cargo tree --manifest-path src-tauri/Cargo.toml --target '${{ matrix.target }}' \
-            -e features | tee "macos-${{ matrix.architecture }}-keychain-tree.txt"
+          cargo tree --manifest-path src-tauri/Cargo.toml \
+            --target '${{ matrix.target }}' -e features \
+            | tee "macos-${{ matrix.architecture }}-keychain-tree.txt"
           grep -E 'keyring v3\.6\.3|security-framework' \
             "macos-${{ matrix.architecture }}-keychain-tree.txt"
           cargo check --manifest-path src-tauri/Cargo.toml \
@@ -354,20 +355,122 @@ jobs:
             "${apps[0]}" "${dmgs[0]}" | tee \
             "macos-${{ matrix.architecture }}-bundle-evidence.txt"
           mkdir -p macos-artifacts
-          ditto "${apps[0]}" \
-            "macos-artifacts/linkdqueue-desktop-macos-${{ matrix.architecture }}-developer-unsigned.app"
-          cp "${dmgs[0]}" \
-            "macos-artifacts/linkdqueue-desktop-macos-${{ matrix.architecture }}-developer-unsigned.dmg"
+          artifact_prefix="macos-artifacts/linkdqueue-desktop-macos-"
+          artifact_prefix="${artifact_prefix}${{ matrix.architecture }}"
+          app_artifact="${artifact_prefix}-developer-unsigned.app"
+          dmg_artifact="${artifact_prefix}-developer-unsigned.dmg"
+          ditto "${apps[0]}" "$app_artifact"
+          cp "${dmgs[0]}" "$dmg_artifact"
           shasum -a 256 macos-artifacts/* \
             | tee "macos-${{ matrix.architecture }}-artifacts.sha256"
 
       - name: Upload unsigned developer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linkdqueue-macos-${{ matrix.architecture }}-developer-unsigned-${{ github.sha }}
+          name: >-
+            ${{ format('linkdqueue-macos-{0}-developer-unsigned-{1}',
+            matrix.architecture, github.sha) }}
           if-no-files-found: error
           path: |
             desktop/macos-artifacts/*
             desktop/macos-${{ matrix.architecture }}-keychain-tree.txt
             desktop/macos-${{ matrix.architecture }}-bundle-evidence.txt
             desktop/macos-${{ matrix.architecture }}-artifacts.sha256
+
+  windows-bundle:
+    name: Build Windows x86_64 NSIS candidate installer (unsigned)
+    needs: validate
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.92.0'
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Record Windows Credential Manager backend and compile it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cargo tree --manifest-path src-tauri/Cargo.toml `
+            --target x86_64-pc-windows-msvc -e features `
+            | Tee-Object -FilePath windows-x86_64-keyring-tree.txt
+          Select-String -Path windows-x86_64-keyring-tree.txt `
+            -Pattern 'keyring v3\.6\.3|windows-sys'
+          cargo check --manifest-path src-tauri/Cargo.toml `
+            --target x86_64-pc-windows-msvc
+
+      - name: Build unsigned NSIS installer
+        run: >-
+          npm run tauri -- build --ci --no-sign
+          --target x86_64-pc-windows-msvc --bundles nsis
+
+      - name: Inspect NSIS PE architecture and metadata
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle_root = 'src-tauri/target/'
+          $bundle_root += 'x86_64-pc-windows-msvc/release/bundle/nsis'
+          if (-not (Test-Path $bundle_root)) {
+            $bundle_root = 'src-tauri/target/release/bundle/nsis'
+          }
+          $installers = @(Get-ChildItem "$bundle_root/*.exe")
+          if ($installers.Count -ne 1) {
+            throw "Expected one NSIS installer, got $($installers.Count)"
+          }
+          $installer = $installers[0]
+          $bytes = [IO.File]::ReadAllBytes($installer.FullName)
+          if ($bytes.Length -lt 0x40 -or $bytes[0] -ne 0x4d -or
+              $bytes[1] -ne 0x5a) {
+            throw 'Installer is not a PE file'
+          }
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length -or
+              $bytes[$peOffset] -ne 0x50 -or $bytes[$peOffset + 1] -ne 0x45) {
+            throw 'Installer has no PE signature'
+          }
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($machine -ne 0x8664) {
+            throw "Expected x86_64 PE machine, got 0x$('{0:x4}' -f $machine)"
+          }
+          $version = $installer.VersionInfo.FileVersion
+          if ($version -notmatch '^2\.0\.0') {
+            throw "Unexpected installer version: $version"
+          }
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          $signature_status = $signature.Status
+          [PSCustomObject]@{
+            Path = $installer.FullName
+            Architecture = 'x86_64 (PE 0x8664)'
+            FileVersion = $version
+            SignatureStatus = $signature_status
+          } | Format-List
+          Get-FileHash $installer.FullName -Algorithm SHA256 `
+            | Tee-Object -FilePath windows-x86_64-installer.sha256
+
+      - name: Upload unsigned candidate installer and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: >-
+            linkdqueue-windows-x86_64-nsis-developer-unsigned-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            desktop/src-tauri/target/**/release/bundle/nsis/*.exe
+            desktop/windows-x86_64-keyring-tree.txt
+            desktop/windows-x86_64-installer.sha256
