@@ -319,7 +319,7 @@ pub fn build_bookmarks_url(
     let limit = validate_bookmark_limit(limit)?;
     let q = compose_query(query, tag)?;
     let route = match scope {
-        BookmarkScope::Queue => "api/bookmarks/",
+        BookmarkScope::All | BookmarkScope::Queue => "api/bookmarks/",
         BookmarkScope::Archive => "api/bookmarks/archived/",
     };
     let mut url = join_fixed(base, route)?;
@@ -515,6 +515,23 @@ mod tests {
 
     #[test]
     fn selects_scope_and_never_uses_an_absolute_route() {
+        let all = build_bookmarks_url(
+            &base("https://example.invalid/linkding/"),
+            BookmarkScope::All,
+            None,
+            Some("systems"),
+            0,
+            Some(20),
+        )
+        .expect("all URL");
+        assert_eq!(
+            all.as_str(),
+            "https://example.invalid/linkding/api/bookmarks/?limit=20&offset=0&q=%23systems"
+        );
+        assert!(all
+            .query_pairs()
+            .all(|(key, _)| key != "unread" && key != "is_read" && key != "is_archived"));
+
         let archive = build_bookmarks_url(
             &base("https://example.invalid/linkding/"),
             BookmarkScope::Archive,

@@ -123,8 +123,35 @@ describe('desktop shell bootstrap and navigation', () => {
     expect(screen.getByRole('button', { name: 'Archive' })).toHaveClass('active');
   });
 
+  it('navigates from the searchable tags catalogue to a labelled tagged view and back', async () => {
+    const appBridge = {
+      ...bridge,
+      listTags: vi.fn().mockResolvedValue({
+        generation: 1,
+        data: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [{ id: 1, name: 'Café', date_added: null }],
+        },
+      }),
+    } as unknown as LinkdqueueBridge;
+    render(App, { props: { bridge: appBridge } });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Tags' }));
+    await fireEvent.click(
+      await screen.findByRole('button', { name: 'Show all bookmarks tagged Café' }),
+    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('All tagged: Café');
+    expect(screen.getByRole('button', { name: 'Back to Tags' })).toBeInTheDocument();
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Back to Tags' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tags');
+  });
+
   it('keeps search as an ephemeral draft in the current shell', async () => {
     render(App, { props: { bridge } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Queue' }));
     const search = screen.getByRole('searchbox', { name: 'Search bookmarks' });
 
     await fireEvent.input(search, { target: { value: 'design systems' } });

@@ -392,6 +392,52 @@ dialog::backdrop {
   }
 }
 
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 1rem;
+}
+
+.tag-catalogue {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+.tag-catalogue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.tag-catalogue-summary {
+  margin: 0;
+  color: var(--color-muted);
+}
+.tag-rows {
+  display: grid;
+  gap: 0.35rem;
+}
+.tag-row {
+  border-bottom: 1px solid var(--color-divider);
+}
+.tag-select {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 0.25rem;
+  color: var(--color-accent-strong);
+  font-weight: 650;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+.tag-select:hover,
+.tag-select:focus-visible {
+  color: var(--color-focus);
+  background: var(--color-accent-soft);
+}
+
 .bookmark-list {
   display: grid;
   gap: 1rem;

@@ -6,6 +6,7 @@
   import AddBookmarkDialog from './lib/features/bookmarks/AddBookmarkDialog.svelte';
   import BookmarkList from './lib/features/bookmarks/BookmarkList.svelte';
   import AllTaggedBookmarkList from './lib/features/bookmarks/AllTaggedBookmarkList.svelte';
+  import TagCatalogueView from './lib/features/tags/TagCatalogueView.svelte';
   import DisplayPreferences from './lib/components/DisplayPreferences.svelte';
   import ConnectionForm from './lib/features/settings/ConnectionForm.svelte';
   import StatusMessage from './lib/components/StatusMessage.svelte';
@@ -53,7 +54,6 @@
     { id: 'queue', label: 'Queue' },
     { id: 'archive', label: 'Archive' },
     { id: 'tags', label: 'Tags' },
-    { id: 'all-tagged', label: 'All tagged' },
     { id: 'settings', label: 'Settings' },
   ];
 
@@ -128,7 +128,7 @@
     navigation.set({
       view: nextView,
       scope: nextView === 'queue' ? 'queue' : nextView === 'archive' ? 'archive' : null,
-      tag: navigationState.tag,
+      tag: nextView === 'tags' ? null : navigationState.tag,
     });
   }
 
@@ -139,7 +139,7 @@
       return;
     }
     filterError = '';
-    navigation.set({ ...navigationState, tag });
+    navigation.set({ ...navigationState, view: 'all-tagged', scope: null, tag });
   }
 
   function clearTag() {
@@ -148,6 +148,8 @@
   }
 
   function activeTitle() {
+    if (navigationState.view === 'all-tagged' && navigationState.tag)
+      return `All tagged: ${navigationState.tag}`;
     return navigationItems.find((item) => item.id === navigationState.view)?.label ?? 'Queue';
   }
 
@@ -201,6 +203,8 @@
     eyebrow={sessionState.kind === 'ready' ? 'Connected' : 'Desktop preview'}
     title={activeTitle()}
     searchValue={searchDraft}
+    searchLabel={navigationState.view === 'tags' ? 'Search tags' : 'Search bookmarks'}
+    searchPlaceholder={navigationState.view === 'tags' ? 'Search tags' : 'Search bookmarks'}
     onSearch={(search) => {
       searchDraft = search;
       navigation.setSearch(search);
@@ -216,7 +220,37 @@
     </button>
   </Toolbar>
 
-  {#if navigationState.scope}
+  {#if navigationState.view === 'all-tagged' && navigationState.tag}
+    <nav class="filter-controls" aria-label="Tagged bookmark scope">
+      <button
+        class="secondary-button"
+        type="button"
+        aria-label="Set scope to All tagged"
+        onclick={() => navigation.set({ ...navigationState, scope: null })}
+        aria-pressed={navigationState.scope === null}>All tagged</button
+      >
+      <button
+        class="secondary-button"
+        type="button"
+        aria-label="Set scope to Queue"
+        onclick={() => navigation.set({ ...navigationState, scope: 'queue' })}
+        aria-pressed={navigationState.scope === 'queue'}>Queue</button
+      >
+      <button
+        class="secondary-button"
+        type="button"
+        aria-label="Set scope to Archive"
+        onclick={() => navigation.set({ ...navigationState, scope: 'archive' })}
+        aria-pressed={navigationState.scope === 'archive'}>Archive</button
+      >
+      <button class="secondary-button" type="button" onclick={() => selectView('tags')}
+        >Back to Tags</button
+      >
+      <button class="secondary-button" type="button" onclick={() => (refreshToken += 1)}
+        >Refresh</button
+      >
+    </nav>
+  {:else if navigationState.scope}
     <nav class="filter-controls" aria-label="Bookmark filters">
       <button
         class="secondary-button"
@@ -289,18 +323,27 @@
         clearConnection={clearConfiguredConnection}
       />
       <DisplayPreferences settings={sessionState.settings} onSave={saveDisplay} />
+    {:else if sessionState.kind === 'ready' && navigationState.view === 'tags' && tagCatalogue}
+      <TagCatalogueView
+        catalogue={tagCatalogue}
+        generation={sessionState.generation}
+        search={navigationState.search}
+        onSelect={chooseTag}
+      />
     {:else if sessionState.kind === 'ready' && navigationState.view === 'all-tagged' && navigationState.tag}
       <AllTaggedBookmarkList
         {bridge}
         generation={sessionState.generation}
         tag={navigationState.tag}
+        scope={navigationState.scope}
+        query={navigationState.search}
         {refreshToken}
       />
     {:else if navigationState.view === 'all-tagged'}
       <StatusMessage
         variant="info"
         title="Choose a tag"
-        message="All tagged requires an explicit tag; choose one from Queue or Archive first."
+        message="All tagged results are available after selecting a tag from the Tags catalogue."
       />
     {:else if sessionState.kind === 'ready' && navigationState.scope}
       <BookmarkList

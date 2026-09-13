@@ -24,7 +24,7 @@ export type ErrorCode =
   | 'external_url_rejected'
   | 'internal_error';
 
-export type BookmarkScope = 'queue' | 'archive';
+export type BookmarkScope = 'all' | 'queue' | 'archive';
 
 export type DisplayPreferences = {
   theme: string;
