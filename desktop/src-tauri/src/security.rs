@@ -47,7 +47,11 @@ mod tests {
             "http://127.0.0.1:9090/",
             "http://localhost:1420/",
             "file:///tmp/index.html",
+            "data:text/html,<script>alert(1)</script>",
             "tauri://evil.example/",
+            "tauri://localhost.attacker.example/",
+            "https://tauri.localhost.attacker.example/",
+            "http://ipc.localhost/",
         ] {
             assert!(
                 !allows_navigation(&url(value)),
