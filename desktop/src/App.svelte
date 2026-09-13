@@ -337,6 +337,7 @@
         tag={navigationState.tag}
         scope={navigationState.scope}
         query={navigationState.search}
+        mutations={bookmarkMutations ?? undefined}
         {refreshToken}
       />
     {:else if navigationState.view === 'all-tagged'}
@@ -352,6 +353,7 @@
         scope={navigationState.scope}
         query={navigationState.search}
         tag={navigationState.tag ?? undefined}
+        mutations={bookmarkMutations ?? undefined}
         {refreshToken}
       />
     {:else}

@@ -1,7 +1,9 @@
 <script lang="ts">
+  /* global HTMLElement, document, queueMicrotask */
   import type { LinkdqueueBridge } from '../../api/bridge';
   import type { Bookmark, BookmarkScope, Generation } from '../../api/types';
   import { BookmarkPager } from '../../queries/bookmarks';
+  import type { BookmarkActionMutations } from './bookmarkActions';
   import BookmarkRow from './BookmarkRow.svelte';
   import BookmarkList from './BookmarkList.svelte';
 
@@ -11,6 +13,9 @@
     tag,
     scope = null,
     query = '',
+    mutations,
+    openTagEditor,
+    onOpenTagEditor,
     refreshToken = 0,
   }: {
     bridge: LinkdqueueBridge;
@@ -18,6 +23,9 @@
     tag: string;
     scope?: BookmarkScope | null;
     query?: string;
+    mutations?: BookmarkActionMutations;
+    openTagEditor?: (bookmark: Bookmark) => void;
+    onOpenTagEditor?: (bookmark: Bookmark) => void;
     refreshToken?: number;
   } = $props();
 
@@ -28,6 +36,9 @@
   let error = $state<unknown>(null);
   let requestKey = '';
   let requestNumber = 0;
+  let listHeading = $state<HTMLElement>();
+  let focusAfterDeleteId = $state<number | null>(null);
+  let mutationAnnouncement = $state('');
 
   async function loadEverything(pager: BookmarkPager) {
     while (pager.snapshot.failedOffset !== null) await pager.retryFailedPage();
@@ -57,20 +68,47 @@
       await Promise.all([nextAll.refresh(), nextArchive.refresh()]);
       await Promise.all([loadEverything(nextAll), loadEverything(nextArchive)]);
       if (currentRequest !== requestNumber) return;
-      rows = [...nextAll.snapshot.rows, ...nextArchive.snapshot.rows].filter(
-        (bookmark, index, bookmarks) =>
-          bookmarks.findIndex((item) => item.id === bookmark.id) === index,
-      );
+      rows = mergedRows(nextAll, nextArchive);
     } catch (cause) {
       if (currentRequest !== requestNumber) return;
-      rows = [...nextAll.snapshot.rows, ...nextArchive.snapshot.rows].filter(
-        (bookmark, index, bookmarks) =>
-          bookmarks.findIndex((item) => item.id === bookmark.id) === index,
-      );
+      rows = mergedRows(nextAll, nextArchive);
       error = cause;
     } finally {
       if (currentRequest === requestNumber) loading = false;
     }
+  }
+
+  function mergedRows(all: BookmarkPager, archive: BookmarkPager): Bookmark[] {
+    return [...all.snapshot.rows, ...archive.snapshot.rows].filter(
+      (bookmark, index, bookmarks) =>
+        bookmarks.findIndex((item) => item.id === bookmark.id) === index,
+    );
+  }
+
+  function focusDeletedRowSuccessor() {
+    const nextId = focusAfterDeleteId;
+    focusAfterDeleteId = null;
+    if (nextId !== null) {
+      const nextRow = document.querySelector<HTMLElement>(`[data-bookmark-id="${nextId}"]`);
+      if (nextRow) {
+        nextRow.focus();
+        return;
+      }
+    }
+    listHeading?.focus();
+  }
+
+  async function handleDeleted(bookmarkId: number, message: string) {
+    mutationAnnouncement = message;
+    const deletedIndex = rows.findIndex((row) => row.id === bookmarkId);
+    focusAfterDeleteId = rows[deletedIndex + 1]?.id ?? null;
+    await load();
+    queueMicrotask(focusDeletedRowSuccessor);
+  }
+
+  function handleMutationSuccess(_bookmarkId: number, message: string) {
+    mutationAnnouncement = message;
+    void load();
   }
 
   async function retry() {
@@ -81,10 +119,7 @@
     error = null;
     try {
       await Promise.all([loadEverything(currentAll), loadEverything(currentArchive)]);
-      rows = [...currentAll.snapshot.rows, ...currentArchive.snapshot.rows].filter(
-        (bookmark, index, bookmarks) =>
-          bookmarks.findIndex((item) => item.id === bookmark.id) === index,
-      );
+      rows = mergedRows(currentAll, currentArchive);
     } catch (cause) {
       error = cause;
     } finally {
@@ -104,9 +139,25 @@
 </script>
 
 {#if scope !== null}
-  <BookmarkList {bridge} {generation} {scope} {query} {tag} {refreshToken} />
+  <BookmarkList
+    {bridge}
+    {generation}
+    {scope}
+    {query}
+    {tag}
+    {mutations}
+    {openTagEditor}
+    {onOpenTagEditor}
+    {refreshToken}
+  />
 {:else}
   <section class="bookmark-list" aria-label="All bookmarks tagged {tag}">
+    <h2 bind:this={listHeading} class="bookmark-list-heading" tabindex="-1">
+      All bookmarks tagged “{tag}”
+    </h2>
+    {#if mutationAnnouncement}<p class="bookmark-announcement" role="status" aria-live="polite">
+        {mutationAnnouncement}
+      </p>{/if}
     {#if loading && rows.length === 0 && error === null}
       <p class="status-message" role="status">Loading all bookmarks tagged “{tag}”…</p>
     {:else if error && rows.length === 0}
@@ -121,7 +172,16 @@
       <div class="bookmark-rows" role="list">
         {#each rows as bookmark (bookmark.id)}
           <div role="listitem">
-            <BookmarkRow {bookmark} {generation} openExternalUrl={bridge.openExternalUrl} />
+            <BookmarkRow
+              {bookmark}
+              {generation}
+              openExternalUrl={bridge.openExternalUrl}
+              {mutations}
+              {openTagEditor}
+              {onOpenTagEditor}
+              onMutationSuccess={handleMutationSuccess}
+              onDeleted={(bookmarkId, message) => void handleDeleted(bookmarkId, message)}
+            />
           </div>
         {/each}
       </div>

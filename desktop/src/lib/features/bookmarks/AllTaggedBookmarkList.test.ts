@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LinkdqueueBridge } from '../../api/bridge';
 import type { Bookmark, CommandEnvelope, Page } from '../../api/types';
 import AllTaggedBookmarkList from './AllTaggedBookmarkList.svelte';
+import type { BookmarkActionMutations } from './bookmarkActions';
 
 type BookmarkPage = CommandEnvelope<Page<Bookmark>>;
 
@@ -34,6 +35,15 @@ const page = (results: Bookmark[]): BookmarkPage => ({
 const bridge = (listBookmarks: LinkdqueueBridge['listBookmarks']): LinkdqueueBridge =>
   ({ listBookmarks }) as LinkdqueueBridge;
 
+const actionMutations = (): BookmarkActionMutations => ({
+  markRead: vi
+    .fn()
+    .mockResolvedValue({ status: 'confirmed', data: bookmark(1, 'changed', false, false) }),
+  archive: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+  unarchive: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+  delete: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+});
+
 describe('AllTaggedBookmarkList', () => {
   it('loads all read/archive states without silently applying the queue unread filter', async () => {
     const listBookmarks = vi.fn(async (input) =>
@@ -49,7 +59,12 @@ describe('AllTaggedBookmarkList', () => {
     );
 
     render(AllTaggedBookmarkList, {
-      props: { bridge: bridge(listBookmarks), generation: 1, tag: 'Café' },
+      props: {
+        bridge: bridge(listBookmarks),
+        generation: 1,
+        tag: 'Café',
+        mutations: actionMutations(),
+      },
     });
 
     await waitFor(() =>
@@ -59,5 +74,10 @@ describe('AllTaggedBookmarkList', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(4);
     expect(listBookmarks.mock.calls.map(([input]) => input.scope)).toEqual(['all', 'archive']);
     expect(listBookmarks.mock.calls.every(([input]) => input.tag === 'Café')).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'Mark as read' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Archive' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Unarchive' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Edit tags' })).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: 'Delete bookmark' })).toHaveLength(4);
   });
 });

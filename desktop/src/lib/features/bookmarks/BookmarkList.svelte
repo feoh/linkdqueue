@@ -1,9 +1,11 @@
 <script lang="ts">
+  /* global HTMLElement, document, queueMicrotask */
   import { onMount } from 'svelte';
   import type { Snippet } from 'svelte';
   import type { LinkdqueueBridge } from '../../api/bridge';
   import type { Bookmark, BookmarkScope, Generation } from '../../api/types';
   import { BookmarkPager, type BookmarkPagerSnapshot } from '../../queries/bookmarks';
+  import type { BookmarkActionMutations } from './bookmarkActions';
   import BookmarkRow from './BookmarkRow.svelte';
 
   let {
@@ -13,6 +15,9 @@
     query = '',
     tag,
     actions,
+    mutations,
+    openTagEditor,
+    onOpenTagEditor,
     refreshToken = 0,
   }: {
     bridge: LinkdqueueBridge;
@@ -21,6 +26,9 @@
     query?: string;
     tag?: string;
     actions?: Snippet<[Bookmark]>;
+    mutations?: BookmarkActionMutations;
+    openTagEditor?: (bookmark: Bookmark) => void;
+    onOpenTagEditor?: (bookmark: Bookmark) => void;
     refreshToken?: number;
   } = $props();
 
@@ -39,8 +47,11 @@
   let observer: InstanceType<typeof globalThis.IntersectionObserver> | undefined;
   let filterKey = '';
   let seenRefreshToken = $state(0);
+  let listHeading = $state<HTMLElement>();
+  let focusAfterDeleteId = $state<number | null>(null);
+  let mutationAnnouncement = $state('');
 
-  function refreshPager(
+  async function refreshPager(
     nextGeneration = generation,
     nextScope = scope,
     nextQuery = query,
@@ -56,20 +67,44 @@
     loading = true;
     requestError = null;
     snapshot = next.snapshot;
-    void next.refresh().then(
-      () => {
-        if (pager !== next) return;
-        snapshot = next.snapshot;
-        requestError = null;
-        loading = false;
-      },
-      (error: unknown) => {
-        if (pager !== next) return;
-        snapshot = next.snapshot;
-        requestError = error;
-        loading = false;
-      },
-    );
+    try {
+      await next.refresh();
+      if (pager !== next) return;
+      snapshot = next.snapshot;
+      requestError = null;
+    } catch (error: unknown) {
+      if (pager !== next) return;
+      snapshot = next.snapshot;
+      requestError = error;
+    } finally {
+      if (pager === next) loading = false;
+    }
+  }
+
+  function focusDeletedRowSuccessor() {
+    const nextId = focusAfterDeleteId;
+    focusAfterDeleteId = null;
+    if (nextId !== null) {
+      const nextRow = document.querySelector<HTMLElement>(`[data-bookmark-id="${nextId}"]`);
+      if (nextRow) {
+        nextRow.focus();
+        return;
+      }
+    }
+    listHeading?.focus();
+  }
+
+  async function handleDeleted(bookmarkId: number, message: string) {
+    mutationAnnouncement = message;
+    const deletedIndex = snapshot.rows.findIndex((row) => row.id === bookmarkId);
+    focusAfterDeleteId = snapshot.rows[deletedIndex + 1]?.id ?? null;
+    await refreshPager();
+    queueMicrotask(focusDeletedRowSuccessor);
+  }
+
+  function handleMutationSuccess(_bookmarkId: number, message: string) {
+    mutationAnnouncement = message;
+    void refreshPager();
   }
 
   $effect(() => {
@@ -144,6 +179,10 @@
 </script>
 
 <section class="bookmark-list" aria-label="Bookmarks">
+  <h2 bind:this={listHeading} class="bookmark-list-heading" tabindex="-1">Bookmarks</h2>
+  {#if mutationAnnouncement}<p class="bookmark-announcement" role="status" aria-live="polite">
+      {mutationAnnouncement}
+    </p>{/if}
   {#if loading && snapshot.rows.length === 0 && requestError === null}
     <p class="status-message" role="status">Loading bookmarks…</p>
   {:else if initialFailure}
@@ -159,7 +198,18 @@
     <div class="bookmark-rows" role="list">
       {#each snapshot.rows as bookmark (bookmark.id)}
         <div role="listitem">
-          <BookmarkRow {bookmark} {generation} openExternalUrl={bridge.openExternalUrl} {actions} />
+          <BookmarkRow
+            {bookmark}
+            {generation}
+            {scope}
+            openExternalUrl={bridge.openExternalUrl}
+            {mutations}
+            {openTagEditor}
+            {onOpenTagEditor}
+            onMutationSuccess={handleMutationSuccess}
+            onDeleted={(bookmarkId, message) => void handleDeleted(bookmarkId, message)}
+            {actions}
+          />
         </div>
       {/each}
     </div>

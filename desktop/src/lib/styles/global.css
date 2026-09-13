@@ -443,6 +443,10 @@ dialog::backdrop {
   gap: 1rem;
   padding-top: 1.5rem;
 }
+.bookmark-list-heading {
+  margin: 0;
+  font-size: 1.1rem;
+}
 .bookmark-rows {
   display: grid;
   gap: 0.85rem;
@@ -484,6 +488,16 @@ dialog::backdrop {
   gap: 0.45rem;
   align-items: center;
 }
+.bookmark-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.bookmark-announcement {
+  margin: 0.75rem 0 0;
+  color: var(--color-success, #176b3a);
+}
 .bookmark-badge,
 .bookmark-tag {
   padding: 0.2rem 0.5rem;
@@ -495,6 +509,10 @@ dialog::backdrop {
 .bookmark-error {
   margin: 0.75rem 0 0;
   color: var(--color-danger, #a33);
+}
+.danger-button {
+  color: var(--color-danger, #a33);
+  border-color: var(--color-danger, #a33);
 }
 .bookmark-sentinel {
   height: 1px;

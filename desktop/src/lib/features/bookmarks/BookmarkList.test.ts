@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LinkdqueueBridge } from '../../api/bridge';
 import type { Bookmark, CommandEnvelope, Page } from '../../api/types';
 import BookmarkList from './BookmarkList.svelte';
+import type { BookmarkActionMutations } from './bookmarkActions';
 
 type BookmarkPage = CommandEnvelope<Page<Bookmark>>;
 
@@ -52,6 +53,13 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
+
+const actionMutations = (): BookmarkActionMutations => ({
+  markRead: vi.fn().mockResolvedValue({ status: 'confirmed', data: bookmark }),
+  archive: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+  unarchive: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+  delete: vi.fn().mockResolvedValue({ status: 'confirmed', data: { confirmed: true } }),
+});
 
 describe('BookmarkList', () => {
   it('shows distinct initial loading and true-empty/no-match states', async () => {
@@ -135,6 +143,38 @@ describe('BookmarkList', () => {
     resolveRetry(page([{ ...bookmark, id: 2, title: 'Retried article' }]));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('End of list.'));
     expect(listBookmarks).toHaveBeenCalledTimes(3);
+  });
+
+  it('shows Queue and Archive action matrices for their bookmark states', async () => {
+    const listBookmarks = vi.fn().mockResolvedValue(page([bookmark]));
+    const queue = render(BookmarkList, {
+      props: {
+        bridge: bridge(listBookmarks),
+        generation: 1,
+        scope: 'queue',
+        mutations: actionMutations(),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Article' });
+    expect(screen.getByRole('button', { name: 'Mark as read' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Unarchive' })).not.toBeInTheDocument();
+    queue.unmount();
+
+    render(BookmarkList, {
+      props: {
+        bridge: bridge(vi.fn().mockResolvedValue(page([{ ...bookmark, is_archived: true }]))),
+        generation: 1,
+        scope: 'archive',
+        mutations: actionMutations(),
+      },
+    });
+    await screen.findByRole('heading', { name: 'Article' });
+    expect(screen.queryByRole('button', { name: 'Mark as read' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Archive' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit tags' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete bookmark' })).toBeInTheDocument();
   });
 
   it('shares one guarded load between the sentinel and keyboard Load more', async () => {
