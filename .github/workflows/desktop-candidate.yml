@@ -263,7 +263,9 @@ jobs:
           artifact_prefix="${artifact_prefix}${{ matrix.architecture }}"
           ditto "${apps[0]}" "${artifact_prefix}-unsigned.app"
           cp "${dmgs[0]}" "${artifact_prefix}-unsigned.dmg"
-          shasum -a 256 candidate-assets/* \
+          find candidate-assets -type f -print0 \
+            | sort -z \
+            | xargs -0 shasum -a 256 \
             | tee "macos-${{ matrix.architecture }}-artifacts.sha256"
 
       - name: Upload unsigned macOS candidate
@@ -340,19 +342,40 @@ jobs:
             throw "Expected one NSIS installer, got $($installers.Count)"
           }
           $installer = $installers[0]
-          $bytes = [IO.File]::ReadAllBytes($installer.FullName)
-          if ($bytes.Length -lt 0x40 -or $bytes[0] -ne 0x4d -or
-              $bytes[1] -ne 0x5a) {
-            throw 'Installer is not a PE file'
+          function Get-PeMachine([string] $path) {
+            $bytes = [IO.File]::ReadAllBytes($path)
+            if ($bytes.Length -lt 0x40 -or $bytes[0] -ne 0x4d -or
+                $bytes[1] -ne 0x5a) {
+              throw "Not a PE file: $path"
+            }
+            $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+            if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length -or
+                $bytes[$peOffset] -ne 0x50 -or
+                $bytes[$peOffset + 1] -ne 0x45) {
+              throw "No PE signature: $path"
+            }
+            return [BitConverter]::ToUInt16($bytes, $peOffset + 4)
           }
-          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
-          if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length -or
-              $bytes[$peOffset] -ne 0x50 -or $bytes[$peOffset + 1] -ne 0x45) {
-            throw 'Installer has no PE signature'
+          $installer_machine = Get-PeMachine $installer.FullName
+          # NSIS uses a 32-bit bootstrapper even when the bundled application
+          # is x86_64, so validate the payload binary separately.
+          if ($installer_machine -notin @(0x014c, 0x8664)) {
+            $installer_machine_text = '{0:x4}' -f $installer_machine
+            throw "Unexpected NSIS PE machine: 0x$installer_machine_text"
           }
-          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
-          if ($machine -ne 0x8664) {
-            throw "Expected x86_64 PE machine, got 0x$('{0:x4}' -f $machine)"
+          $target_release = 'src-tauri/target/x86_64-pc-windows-msvc/release'
+          $payload = Join-Path $target_release 'linkdqueue-desktop.exe'
+          if (-not (Test-Path $payload)) {
+            $fallback_release = 'src-tauri/target/release'
+            $payload = Join-Path $fallback_release 'linkdqueue-desktop.exe'
+          }
+          if (-not (Test-Path $payload)) {
+            throw 'Built x86_64 application payload was not found'
+          }
+          $payload_machine = Get-PeMachine $payload
+          if ($payload_machine -ne 0x8664) {
+            $payload_machine_text = '{0:x4}' -f $payload_machine
+            throw "Expected x86_64 payload PE machine: 0x$payload_machine_text"
           }
           $version = $installer.VersionInfo.FileVersion
           if ($version -notmatch '^2\.0\.0') {
@@ -364,7 +387,9 @@ jobs:
           Copy-Item $installer.FullName candidate-assets/
           $metadata = [PSCustomObject]@{
             Path = $installer.Name
-            Architecture = 'x86_64 (PE 0x8664)'
+            Architecture = 'x86_64 application payload (PE 0x8664)'
+            InstallerPEMachine = "0x$('{0:x4}' -f $installer_machine)"
+            PayloadPEMachine = "0x$('{0:x4}' -f $payload_machine)"
             FileVersion = $version
             SignatureStatus = $signature_status
           }
