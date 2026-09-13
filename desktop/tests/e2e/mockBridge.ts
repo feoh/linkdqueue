@@ -74,28 +74,48 @@ export function createBrowserBridge(): LinkdqueueBridge {
   let failedPage20 = false;
   let failedOpen = false;
   let failedTagSave = false;
-  const bookmarks: Bookmark[] = Array.from({ length: 25 }, (_, index) =>
-    bookmark(index + 1, `Queue bookmark ${index + 1}`, {
-      tag_names: index % 2 === 0 ? ['python', 'reading'] : ['python'],
-    }),
-  );
-  bookmarks.push(
-    bookmark(26, 'Archived bookmark', {
-      is_archived: true,
-      unread: false,
-      tag_names: ['python', 'archive'],
-    }),
-    bookmark(27, 'Archived second bookmark', {
-      is_archived: true,
-      unread: false,
-      tag_names: ['archive'],
-    }),
-  );
-  const tags: Tag[] = [
-    { id: 1, name: 'archive', date_added: '2026-01-01' },
-    { id: 2, name: 'python', date_added: '2026-01-02' },
-    { id: 3, name: 'reading', date_added: '2026-01-03' },
-  ];
+  const performanceDataset =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('dataset') === 'performance';
+  const bookmarks: Bookmark[] = performanceDataset
+    ? Array.from({ length: 1000 }, (_, index) =>
+        bookmark(index + 1, `Synthetic bookmark ${index + 1} — long metadata fixture`, {
+          description:
+            `Long deterministic description for synthetic bookmark ${index + 1}. `.repeat(8),
+          notes: `Notes for synthetic bookmark ${index + 1}. `.repeat(4),
+          tag_names: [`tag-${(index % 205) + 1}`],
+        }),
+      )
+    : Array.from({ length: 25 }, (_, index) =>
+        bookmark(index + 1, `Queue bookmark ${index + 1}`, {
+          tag_names: index % 2 === 0 ? ['python', 'reading'] : ['python'],
+        }),
+      );
+  if (!performanceDataset) {
+    bookmarks.push(
+      bookmark(26, 'Archived bookmark', {
+        is_archived: true,
+        unread: false,
+        tag_names: ['python', 'archive'],
+      }),
+      bookmark(27, 'Archived second bookmark', {
+        is_archived: true,
+        unread: false,
+        tag_names: ['archive'],
+      }),
+    );
+  }
+  const tags: Tag[] = performanceDataset
+    ? Array.from({ length: 205 }, (_, index) => ({
+        id: index + 1,
+        name: `tag-${index + 1}`,
+        date_added: '2026-01-01',
+      }))
+    : [
+        { id: 1, name: 'archive', date_added: '2026-01-01' },
+        { id: 2, name: 'python', date_added: '2026-01-02' },
+        { id: 3, name: 'reading', date_added: '2026-01-03' },
+      ];
 
   function record(command: string, input: unknown): void {
     commands.push({ command, input });
@@ -151,7 +171,7 @@ export function createBrowserBridge(): LinkdqueueBridge {
     async listBookmarks(input) {
       record('list_bookmarks', input);
       requireReady();
-      if (input.offset === 20 && !failedPage20 && input.scope === 'queue') {
+      if (input.offset === 20 && !failedPage20 && input.scope === 'queue' && !performanceDataset) {
         failedPage20 = true;
         throw error('network_error');
       }
@@ -178,7 +198,13 @@ export function createBrowserBridge(): LinkdqueueBridge {
     async listTags(input) {
       record('list_tags', input);
       requireReady();
-      return page(generation, tags, input.offset, tags.length);
+      const limit = input.limit ?? 100;
+      return page(
+        generation,
+        tags.slice(input.offset, input.offset + limit),
+        input.offset,
+        tags.length,
+      );
     },
     async createBookmark(input) {
       record('create_bookmark', input);

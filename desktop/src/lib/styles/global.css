@@ -100,7 +100,7 @@ nav button {
 nav button:hover,
 nav button:focus-visible,
 nav button.active {
-  color: var(--color-sidebar);
+  color: var(--color-on-accent);
   background: var(--color-accent);
 }
 
@@ -182,7 +182,7 @@ h1 {
 
 .primary-button {
   color: var(--color-on-accent);
-  background: var(--color-focus);
+  background: var(--color-accent-strong);
 }
 
 .secondary-button {
@@ -346,7 +346,7 @@ dialog::backdrop {
   border: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -398,6 +398,13 @@ dialog::backdrop {
   align-items: center;
   gap: 0.65rem;
   padding-top: 1rem;
+}
+
+.filter-controls button,
+.filter-controls button:hover,
+.filter-controls button:focus-visible {
+  color: var(--color-accent-strong);
+  background: var(--color-accent-soft);
 }
 
 .tag-catalogue {
@@ -512,6 +519,7 @@ dialog::backdrop {
 }
 .danger-button {
   color: var(--color-danger, #a33);
+  background: var(--color-surface);
   border-color: var(--color-danger, #a33);
 }
 .bookmark-sentinel {

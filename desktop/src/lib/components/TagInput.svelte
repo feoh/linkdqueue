@@ -116,12 +116,12 @@
   </div>
   {#if error}<p class="field-error" role="alert">{error}</p>{/if}
   {#if availableSuggestions.length}
-    <ul id={`${id}-suggestions`} class="tag-suggestions" role="listbox">
+    <div id={`${id}-suggestions`} class="tag-suggestions" role="listbox">
       {#each availableSuggestions.slice(0, 8) as name (name)}
-        <li role="option" aria-selected="false">
-          <button type="button" onclick={() => add(name)}>{name}</button>
-        </li>
+        <button type="button" role="option" aria-selected="false" onclick={() => add(name)}>
+          {name}
+        </button>
       {/each}
-    </ul>
+    </div>
   {/if}
 </div>

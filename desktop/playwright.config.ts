@@ -8,6 +8,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
+    actionTimeout: 10_000,
     baseURL: 'http://127.0.0.1:1420',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

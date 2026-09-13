@@ -210,7 +210,7 @@ describe('EditTagsDialog', () => {
       props: { open: true, bookmark: bookmark(4, ['missing']), generation: 7, catalogue },
     });
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'catalogued' })).toBeInTheDocument(),
+      expect(screen.getByRole('option', { name: 'catalogued' })).toBeInTheDocument(),
     );
     expect(screen.getByRole('button', { name: 'Remove missing' })).toBeInTheDocument();
   });

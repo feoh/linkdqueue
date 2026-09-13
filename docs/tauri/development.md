@@ -64,9 +64,10 @@ a loopback-only mock server; they never inspect the host keyring or network.
 - Rust integration tests under `src-tauri/tests/support/` use temporary
   preferences, failure-injectable fake storage, and a server bound to
   `127.0.0.1`. No test accepts a real token or discovers real credentials.
-- Browser/axe, disposable live-Linkding, native keyring, packaging, and
-  cross-OS checks are later tasks. They are not represented by skipped CI jobs
-  or by a green placeholder.
+- Browser/axe coverage uses the local in-memory bridge and is documented in
+  [`evidence/accessibility-performance.md`](evidence/accessibility-performance.md).
+  Native screen-reader, native keyring, packaging, and cross-OS checks remain
+  separate evidence gates; none is represented by a skipped green placeholder.
 
 ## CI policy
 
