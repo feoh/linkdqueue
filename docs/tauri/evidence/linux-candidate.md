@@ -1,112 +1,120 @@
 # Q06 Linux candidate and Secret Service evidence
 
-Status: **blocked; implementation-phase evidence only**. This record does not
-claim Linux release support. The required CI candidate manifest and a
-supported disposable Linux install environment were not available during this
-run.
+Status: **blocked for final acceptance; candidate and partial Linux gates
+passed**. This record covers immutable candidate `9f5578af677a82ef5a6649f5c03d264701ab31c1` and does not claim Linux release support. Native restart persistence, successful native credential save/clear, locked/wrong-auth stores, and a full interactive Linkding workflow remain unverified.
 
-## Test environment
+## Candidate provenance
 
-- Date: 2026-09-13
-- Host: CachyOS rolling, kernel `7.2.3-1-cachyos`, x86_64, Wayland
-- WebKitGTK reported by `pkg-config`: `2.52.6`
-- GTK 3 reported by `pkg-config`: `3.24.52`
-- Secret Service: `org.freedesktop.secrets` active; KWallet 6.29.0-1.1;
-  `libsecret` 0.21.7-1.1
-- Toolchain: Node `v24.15.0`, npm `11.12.1`, Rust/Cargo `1.92.0`
-- Candidate source: local commit
-  `f99238406648173a36c809807f54e701738358d9`
-- No real credentials, personal Linkding service, or legacy preferences were
-  used. Temporary XDG config/data/cache directories were removed after the
-  launch attempt.
+- GitHub Actions run: [34789342123](https://github.com/feoh/linkdqueue/actions/runs/34789342123)
+- Candidate commit: `9f5578af677a82ef5a6649f5c03d264701ab31c1`
+- Candidate manifest SHA-256: `addebdd3bebe6adaf72e254ec4bed47653e3ebb71e1095c85265e39ea0479210`
+- Manifest toolchains: Node `24.15.0`, Rust `1.92.0`
+- Version: `2.0.0`
+- Signing: unsigned, non-public Actions artifacts only
+- Linux AppImage SHA-256: `78fd37d39fc792cab67561ed3060d94fea14ea4b60513eafbfa5bc36c4d290cd`
+- Linux `.deb` SHA-256: `943ed305fab197b9f1150d656c07b5752f41c12cc5a867c24599a9c46e423525`
 
-The workflow file exists only in the local checkout at this revision;
-`gh run list --workflow desktop-candidate.yml` against `feoh/linkdqueue` returned
-HTTP 404 because it has not been pushed to the default branch. Consequently
-there is no CI run ID, candidate manifest, or platform artifact checksum to
-record or install.
+The downloaded Linux artifact checksum file passed `sha256sum -c`. The
+manifest includes the Linux AppImage, `.deb`, both macOS architectures, and
+the Windows installer, all tied to the same immutable commit. The complete
+candidate workflow passed its validation, Linux, macOS arm64, macOS x86_64,
+Windows, and manifest jobs.
 
-## Automated candidate-source validation
+## Disposable test environment
 
-Run from `/tmp/linkdqueue-q06/desktop`:
+- Ubuntu `24.04.4 LTS` x86_64 Docker container, image `ubuntu:24.04`
+- WebKitGTK `2.52.6`, GTK 3 `3.24.41`, Xvfb `21.1.12`, gnome-keyring
+  `46.1-2ubuntu0.2`, libsecret `0.21.4-1build3`
+- Runtime libraries installed from Ubuntu packages: WebKitGTK 4.1, GTK 3,
+  Ayatana AppIndicator, libsecret, XDG utilities, and software-rendered X11
+- All containers, temporary XDG directories, disposable credentials, and
+  mounted candidate files were removed after testing
+- No personal credentials, personal Linkding service, or legacy preferences
+  were used
+
+## Automated and artifact checks
+
+The exact candidate source checks in the hosted run passed:
 
 ```text
-npm ci                                      passed (245 packages, 0 vulnerabilities)
-npm run format:check                        passed
-npm run lint                                passed
-npm run check                               passed (0 diagnostics)
-npm run test:unit                           passed (21 files, 98 tests)
-npm run test:contracts                      passed
-npm run build                               passed
-cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-                                            passed
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
-                                            passed
-cargo test --manifest-path src-tauri/Cargo.toml --all-targets --all-features
-                                            passed (58 unit tests, 2 harness tests;
-                                            1 disposable live-Linkding test ignored)
+Validate frontend: format:check, lint, check, unit tests (98), contracts, build — passed
+Validate Rust: fmt, clippy -D warnings, cargo test — passed (58 unit + 2 harness; 1 live test not part of hosted job)
+Linux x86_64: AppImage and .deb build, architecture/metadata inspection, checksum upload — passed
+macOS arm64 and x86_64: build, architecture/metadata inspection, checksum upload — passed
+Windows x86_64: target compile, NSIS build, payload PE inspection, checksum upload — passed
+Candidate manifest: same commit/version and all platform artifacts/checksums — passed
 ```
 
-The exact Rust feature set compiled `keyring 3.6.3` with the synchronous
-Secret Service backend. These checks are source/build evidence, not native
-application acceptance.
+The disposable pinned Linkding image `sissbruecker/linkding:1.46.2` was run on
+loopback with a temporary account and token. From the candidate Rust source:
 
-## Local bundle checks
+```text
+cargo test --manifest-path src-tauri/Cargo.toml \
+  --test linkding_live -- --ignored --nocapture — passed (1 test)
+```
 
-- `npm run tauri -- build --bundles deb --ci --no-sign`: **passed**.
-- The resulting unsigned Debian package was inspected without installing it
-  (this host has no `dpkg-deb`): `Package: linkdqueue-desktop`, `Version:
-2.0.0`, `Architecture: amd64`, and dependencies include GTK/WebKitGTK,
-  Ayatana AppIndicator, and libsecret.
-- Local Debian package SHA-256:
-  `7ce5b1dc4e0f341661aa0ddc2ed0ebb7ad077d245157c31e639bc7e0b44e60fd`.
-- Package contents were extracted under `/tmp` only and removed afterward.
-- `npm run tauri -- build --bundles appimage --ci --no-sign`: **failed** during
-  linuxdeploy. The host's rolling-distribution shared libraries use RELR
-  sections that the bundled linuxdeploy `strip` cannot recognize. The log
-  reports `unknown type [0x13] section .relr.dyn` for libraries including
-  `libwebkit2gtk-4.1.so.0`; this is not a successful AppImage candidate.
-  Rebuild on the pinned Ubuntu 22.04 candidate runner is required.
+That test exercised profile compatibility, queue/archive scopes, tag filtering,
+20/100-item pagination, bookmark creation, tag replacement, mark-read,
+archive/unarchive, and deletion. The token was supplied only through the
+process environment and was not printed.
 
-The combined `appimage,deb` build was also attempted and failed at the
-AppImage step. The successful `.deb` checksum above must not be confused with
-a CI candidate-manifest checksum.
+## Native package and launch checks
 
-## Native launch and Secret Service checks
+- Installed the candidate `.deb` in the Ubuntu container with `dpkg -i`.
+  `dpkg-query` reported `linkdqueue-desktop 2.0.0 amd64`; the application
+  binary and desktop entry were present.
+- With the `.deb` installed, launched the candidate AppImage using its
+  supported `--appimage-extract-and-run` mode under Xvfb. The native window
+  reported `800x600`; `CmdOrCtrl+Q` equivalent `Ctrl+Q` exited cleanly with
+  return code 0.
+- Launched the installed `.deb` under the same Xvfb/DBus setup. The native
+  window reported `800x600`; `Ctrl+Q` exited cleanly with return code 0.
+- Removed the `.deb` with `dpkg -r linkdqueue-desktop`; package state and
+  `/usr/bin/linkdqueue-desktop` were gone afterward.
+- The container had no Flutter installation, so package coexistence with an
+  installed Flutter desktop app and preservation of its desktop entry were not
+  proven. No Flutter or server data was touched.
 
-- A release binary launch with temporary XDG directories under the current
-  Wayland session exited immediately with `Gdk-Message: Error 71 (Protocol
-error) dispatching to Wayland display`.
-- Retrying with `GDK_BACKEND=x11` kept the process alive for the eight-second
-  observation window, but emitted `Failed to create GBM buffer of size
-1600x1200: Invalid argument`. No interactive UI, menu, quit, restart, or
-  Linkding workflow assertion was made from this attempt.
-- A temporary Rust example using the production `NativeCredentialStore` and
-  the isolated service namespace created a disposable entry, read it back, and
-  deleted it successfully. The test printed only `native Secret Service
-disposable create/read/delete: passed`; its disposable entry was deleted.
-  This proves only the unlocked create/read/delete path for the current
-  KWallet-backed Secret Service.
-- Missing-entry behavior is covered by the Rust unit suite. Locked-store,
-  unavailable-store, wrong-auth, native application restart/clear, and real
-  Linkding list/mutation scenarios were not exercised. No safe simulation or
-  supported disposable Linkding server was available.
+## Secret Service lifecycle checks
 
-## Gate result and blockers
+A host-level disposable check against the production `NativeCredentialStore`
+used the current isolated service namespace and a temporary Secret Service
+entry. Create/read/delete passed against the host's unlocked KWallet-backed
+Secret Service. The entry was deleted and no secret value was recorded.
 
-| Gate                                               | Result          | Evidence / blocker                                                          |
-| -------------------------------------------------- | --------------- | --------------------------------------------------------------------------- |
-| Immutable CI candidate and manifest                | Blocked         | Workflow absent from origin; no run or manifest                             |
-| x86_64 AppImage                                    | Blocked         | linuxdeploy RELR/rolling-host failure; Ubuntu runner rebuild required       |
-| x86_64 `.deb` build/metadata                       | Local pass only | Unsigned package built and inspected; not installed                         |
-| Supported disposable install/coexistence/uninstall | Blocked         | No Ubuntu-compatible disposable desktop VM and no `dpkg-deb` installer path |
-| Real Linkding workflow                             | Blocked         | No disposable Linkding service/account                                      |
-| Secret Service unlocked path                       | Local pass only | Production backend disposable create/read/delete passed                     |
-| Secret Service locked/unavailable/wrong-auth       | Blocked         | No isolated safe simulation available                                       |
-| Native restart/clear/menu/browser/keyboard gates   | Blocked         | GUI session launch was not stable for interactive testing                   |
+In the Ubuntu native launch container, gnome-keyring had no login collection
+available. A native save attempt against the disposable Linkding server
+reached the server's profile endpoint, then failed closed when the credential
+store could not provide a collection. The UI displayed its desktop operation
+error page, and no preference file or plaintext token was created under the
+isolated XDG configuration directory. This is evidence for the unavailable
+store/error path, not a successful persistence test.
 
-Q06 must remain open. The next run needs an immutable CI candidate after the
-workflow manifest import bug is corrected, then a disposable Ubuntu 22.04-or-
-newer desktop environment with WebKitGTK, a Secret Service provider, and a
-non-personal Linkding test service. No release support, native lifecycle pass,
-or publication authorization is inferred from this evidence.
+The following required store scenarios were not completed:
+
+- unlocked native save/read across an actual application restart;
+- successful native clear followed by reopen/no reconnect;
+- intentionally locked store and wrong-auth behavior; and
+- native UI list/mutation/browser-open flow against the disposable Linkding
+  service (the Rust live test covers the HTTP layer only).
+
+## Gate result
+
+| Gate | Result | Evidence / residual risk |
+| --- | --- | --- |
+| Immutable candidate and manifest | **Pass** | Run `34789342123`; manifest and checksums tied to commit `9f5578a` |
+| x86_64 AppImage | **Pass (artifact)** | Ubuntu candidate built and launched with extract-and-run; standard installed AppImage acceptance still needs supported desktop confirmation |
+| x86_64 `.deb` | **Pass (artifact/install)** | Installed, inspected, launched, and removed in disposable Ubuntu container |
+| Supported install/coexistence | **Partial** | Ubuntu package lifecycle passed; Flutter coexistence was not available to test |
+| Real disposable Linkding API | **Pass (Rust integration)** | Pinned 1.46.2 live test passed; native UI path remains unverified |
+| Secret Service unlocked CRUD | **Pass (adapter only)** | Production adapter create/read/delete passed on host KWallet |
+| Missing/unavailable Secret Service | **Partial pass** | Native save failed closed with no plaintext fallback; full user-facing recovery needs a supported unlocked/locked setup |
+| Locked/wrong-auth Secret Service | **Blocked** | No safe isolated locked/wrong-auth scenario completed |
+| Native restart persistence and clear | **Blocked** | Native save could not complete in disposable Ubuntu keyring setup |
+| Menus/quit/window minimum | **Partial pass** | Native `Ctrl+Q` and 800x600 passed; all menu actions were not interactively exercised |
+| Browser open and native bookmark mutations | **Blocked** | No native UI workflow completed |
+
+Q06 must remain open. The next run needs a supported Linux desktop with a
+working unlocked Secret Service collection (and a controllable locked/wrong
+auth state), then must rerun the same candidate—not an older artifact—for
+native save/restart/clear, browser, menu, and disposable Linkding UI gates.
