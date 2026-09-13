@@ -3,5 +3,9 @@
   "identifier": "main-capability",
   "description": "Permissions for the bundled local Linkdqueue window only.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "allow-linkdqueue-commands",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
 }

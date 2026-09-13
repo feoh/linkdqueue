@@ -1,0 +1,21 @@
+"$schema" = "../gen/schemas/desktop-schema.json"
+
+[[permission]]
+identifier = "allow-linkdqueue-commands"
+description = "Allows only the typed Linkdqueue commands exposed to the bundled main window."
+commands.allow = [
+  "get_settings",
+  "test_connection",
+  "save_connection",
+  "clear_connection",
+  "set_display_preferences",
+  "list_bookmarks",
+  "list_tags",
+  "create_bookmark",
+  "mark_read",
+  "replace_bookmark_tags",
+  "archive_bookmark",
+  "unarchive_bookmark",
+  "delete_bookmark",
+  "open_external_url",
+]

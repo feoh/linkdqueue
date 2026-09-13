@@ -11,19 +11,44 @@ state, and short-lived form drafts; Rust owns URL validation, HTTP, credential
 access, preferences, generation checks, and the constrained external opener.
 There is no renderer-side Linkding HTTP client.
 
-The production capability set grants the main window only the named commands in
-[`ipc.md`](ipc.md). It grants no generic HTTP, filesystem, shell, SQL, remote
-content, or arbitrary URL-open command. A second window and any remote origin
-receive no application command permissions. No bookmark text is interpreted as
-HTML/Markdown, and no favicon, preview, archive, or website URL is loaded by
-the renderer.
+The production capability set is explicitly selected as `main-capability` and
+maps to `desktop/src-tauri/capabilities/main.json`. It grants the `main` window
+only `allow-linkdqueue-commands` plus the two event permissions needed to
+receive native menu events (`core:event:allow-listen` and
+`core:event:allow-unlisten`). It deliberately does not include `core:default`,
+any generic HTTP, filesystem, shell, SQL, remote-content, or opener plugin
+permission. An application command absent from `permissions/linkdqueue.toml`
+is denied by the Tauri ACL; command registration alone is not authorization.
+A second window and any remote origin receive no application command
+permissions. No bookmark text is interpreted as HTML/Markdown, and no favicon,
+preview, archive, or website URL is loaded by the renderer.
 
-The bundled window has a strict CSP: scripts and styles are bundled from the
-application, frames/objects/workers are disabled, and network connections are
-not granted to the renderer. The CSP must retain only the Tauri IPC transport
-exception required by the chosen Tauri 2 version. A CSP/capability test must
-fail if a remote origin, broad shell permission, or unrestricted opener is
+`permissions/linkdqueue.toml` is the complete allowlist for the 14 typed
+commands in [`ipc.md`](ipc.md). The capability has no `urls` entry, so its
+permissions apply only to the local bundled `main` window. The navigation guard
+in `src/security.rs` permits only the bundled `tauri.localhost`/`tauri://localhost`
+origins (and the explicit Vite `127.0.0.1:1420` origin in debug builds). External
+bookmark URLs must use the validated `open_external_url` command and never
+become webview navigations.
+
+The bundled window has a strict production CSP: scripts and styles are bundled
+from the application, frames/objects/workers, forms, media and fonts are
+disabled, and the only network exception is the Tauri IPC transport. It contains
+no wildcard HTTPS, remote script/image, unsafe-eval, or filesystem source. The
+separate `devCsp` permits only the local Vite HTTP/WebSocket server and is never
+used for packaged builds. `freezePrototype` is enabled. A CSP/capability test
+must fail if a remote origin, broad shell permission, or unrestricted opener is
 introduced.
+
+## Verification expectations
+
+`cargo test --manifest-path desktop/src-tauri/Cargo.toml` exercises the
+navigation policy and causes Tauri to parse and validate the capability and
+permission manifests. The release gate must additionally run the real packaged
+build (`npm run tauri -- build --ci --no-sign`) and invoke every required command
+from the bundled window; browser-side fetch to a Linkding URL and external
+navigation must remain blocked. CI must inspect the resulting bundle rather than
+accepting a config-only grep as proof.
 
 ## Native credential store
 

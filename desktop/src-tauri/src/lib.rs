@@ -8,11 +8,17 @@ pub mod http;
 pub mod menu;
 pub mod opener;
 pub mod preferences;
+pub mod security;
 pub mod session;
 pub mod validation;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri::plugin::Builder::<tauri::Wry>::new("navigation-guard")
+                .on_navigation(|_, url| security::allows_navigation(url))
+                .build(),
+        )
         .setup(|app| {
             use tauri::Manager;
 
