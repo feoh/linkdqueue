@@ -37,7 +37,7 @@ validate_app() {
   local architectures
   architectures="$(lipo -archs "$candidate/Contents/MacOS/$executable")"
   test "$architectures" = "$expected_arch"
-  lipo -verify_arch "$expected_arch" "$candidate/Contents/MacOS/$executable"
+  lipo "$candidate/Contents/MacOS/$executable" -verify_arch "$expected_arch"
   echo "app=$candidate"
   echo "identifier=$(plist_value CFBundleIdentifier "$candidate_plist")"
   echo "minimum-system=$(plist_value LSMinimumSystemVersion "$candidate_plist")"

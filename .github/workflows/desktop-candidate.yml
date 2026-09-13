@@ -195,7 +195,9 @@ jobs:
             runner: macos-14
             target: aarch64-apple-darwin
           - architecture: x86_64
-            runner: macos-13
+            # macos-13 is no longer available on GitHub-hosted runners.
+            # macos-14 can cross-build and inspect the Intel target.
+            runner: macos-14
             target: x86_64-apple-darwin
     runs-on: ${{ matrix.runner }}
     defaults:
