@@ -54,6 +54,29 @@ A Secret Service daemon and user session are additionally required once the
 credential backend is implemented. CI foundation tests use a fake keyring and
 a loopback-only mock server; they never inspect the host keyring or network.
 
+## Windows packaging
+
+The Windows candidate job runs on `windows-2022`, targets
+`x86_64-pc-windows-msvc`, and builds only an unsigned NSIS installer. It
+compiles the Windows Credential Manager backend, uses the current-user
+installer mode, and downloads the Evergreen WebView2 bootstrapper only when
+WebView2 is absent. A clean Windows test host needs network access for that
+bootstrapper or a preinstalled supported WebView2 Runtime.
+
+The local equivalent for package configuration is:
+
+```sh
+cd desktop
+npm ci
+npm run tauri -- build --ci --no-sign --bundles deb  # Linux config validation
+```
+
+Run the Windows workflow through `workflow_dispatch` for an NSIS candidate.
+The workflow uploads an installer, PE architecture/version evidence, signing
+status, keyring feature evidence, and a checksum. It does not publish a
+release or require signing secrets. Native install, uninstall, WebView2,
+Credential Manager, and restart/clear checks are Q08 gates.
+
 ## Test boundaries
 
 - `npm run test:unit` uses Vitest, jsdom, Svelte Testing Library, fake timers,
