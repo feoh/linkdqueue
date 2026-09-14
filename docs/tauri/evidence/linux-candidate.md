@@ -1,7 +1,7 @@
 # Q06 Linux candidate and Secret Service evidence
 
 Status: **blocked for final acceptance; candidate and partial Linux gates
-passed**. This record covers immutable candidate `294a07dbe0b56eff68a3643e411db6cd523c10ca` and does not claim Linux release support. The candidate includes the native IPC payload fix. Locked/wrong-auth stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
+passed**. This record covers immutable candidate `294a07dbe0b56eff68a3643e411db6cd523c10ca` and does not claim Linux release support. The candidate includes the native IPC payload fix. Locked stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
 
 ## Candidate provenance
 
@@ -71,10 +71,9 @@ process environment and was not printed.
 - Removed the `.deb` with `dpkg -r linkdqueue-desktop`; package state and
   `/usr/bin/linkdqueue-desktop` were gone afterward.
 - Launched the candidate AppImage with its supported
-  `--appimage-extract-and-run` mode under Xvfb; the native window reported
-  `800x600`. Ctrl+Q could not be conclusively exercised because the disposable
-  Xvfb session has no window manager and Tauri's native accelerator did not
-  receive a real desktop focus event. This remains a native desktop gate.
+  `--appimage-extract-and-run` mode under Xvfb and Openbox; the native window
+  reported `800x600`, and Ctrl+Q exited cleanly. A real window manager was
+  required for this accelerator check.
 - The container had no Flutter installation, so package coexistence with an
   installed Flutter desktop app and preservation of its desktop entry were not
   proven. No Flutter or server data was touched.
@@ -97,15 +96,9 @@ store/error path, not a successful persistence test.
 The following required scenarios were not completed against the immutable
 candidate:
 
-- intentionally locked store and wrong-auth behavior;
+- intentionally locked Secret Service behavior;
 - native UI browser opening and complete menu coverage; and
 - Flutter coexistence on the same desktop.
-
-The rebuilt source passed native save/read across an actual restart,
-successful clear followed by reopen/no reconnect, and native bookmark creation.
-Those results are recorded below, but the hosted candidate artifact was only
-validated through package launch and quit; its native credential lifecycle
-still requires a supported interactive Linux run.
 
 ## Native IPC fix and disposable Secret Service run
 
@@ -116,52 +109,51 @@ bypasses Tauri serialization. `desktop/src/lib/api/bridge.ts` now sends
 `{ input }` for every typed command, and its bridge unit test asserts the
 nested payload. Candidate run `34794691403` includes this fix.
 
-The following local run used the rebuilt release binary (not the old Actions
-artifact), a disposable Ubuntu 24.04 x86_64 container, Xvfb, a private
-`dbus-run-session`, and a freshly unlocked gnome-keyring Secret Service
-collection. The pinned disposable Linkding `1.46.2` server was exposed only
-on loopback at a temporary port; its temporary account and token were deleted
-with the environment.
+The native candidate run used the exact AppImage from run `34794691403`, a
+disposable Ubuntu 24.04 x86_64 container, Xvfb, Openbox, a private
+`dbus-run-session`, and a freshly initialized gnome-keyring Secret Service
+collection. The pinned disposable Linkding `1.46.2` server was exposed on
+loopback at a temporary port; its temporary account, API tokens, and XDG
+state were deleted with the environment.
 
-- `npm run test:unit -- --run src/lib/api/bridge.test.ts` — 2 tests passed.
-- `npm run tauri -- build --bundles deb --ci` — rebuilt the post-fix `.deb` and
-  release binary successfully. Local AppImage bundling still cannot complete
-  on this host because linuxdeploy rejects the host's RELR sections; this is
-  not used as AppImage candidate evidence. The hosted candidate workflow then
-  rebuilt both Linux artifacts from the immutable fix commit.
-- Native onboarding through the rebuilt binary: HTTP consent, Test connection,
-  Save connection, and the connected Queue view passed against Linkding.
-- Native bookmark creation with URL/title/description/tag passed; the
-  disposable server reported the created bookmark. No token appeared in the
-  isolated preferences directory or application log.
-- Relaunch in the same isolated session showed `CONNECTED`, proving saved
-  native credential and display state survived an application restart.
-- Settings → Clear connection → confirm passed. The isolated Secret Service
-  lookup returned no entry, preferences contained `state: disconnected`, and
-  the next relaunch showed the unconfigured connection form without
-  reconnecting.
+- Native onboarding through the candidate: HTTP consent, Test connection, and
+  Save connection passed against Linkding. The connected Queue view rendered
+  the seeded disposable bookmark and first-page requests returned 200.
+- The preferences file contained only the canonical endpoint, credential
+  reference, and display settings; it did not contain the API token. A
+  Secret Service lookup confirmed the token was stored under the isolated
+  `com.feoh.linkdqueue.desktop.v1` namespace.
+- Relaunching the same candidate in the same unlocked session retained the
+  configured state and successfully read the credential.
+- Settings → Clear connection → confirm passed. The preferences state became
+  `disconnected`, the Secret Service lookup returned no entry, and the
+  candidate did not reconnect after the next relaunch.
+- A separate candidate run with a synthetic invalid token displayed
+  `Linkding authentication failed` and created no preferences file.
+- The host-level disposable production `NativeCredentialStore` create/read/
+  delete check passed against the unlocked KWallet-backed Secret Service.
 
-This run materially verifies the unlocked save/restart/clear lifecycle for
-source that is now included in candidate `294a07d`, but the hosted artifact
-still needs the interactive credential and full workflow gates below.
+These checks materially verify the unlocked save/restart/clear lifecycle and
+wrong-auth handling on the exact immutable candidate. Locked-store behavior,
+browser opening, complete menu actions, and coexistence remain open.
 
 ## Gate result
 
 | Gate | Result | Evidence / residual risk |
 | --- | --- | --- |
 | Immutable candidate and manifest | **Pass** | Run `34794691403`; manifest checksum and 21 asset digests tied to commit `294a07d` |
-| x86_64 AppImage | **Pass (artifact/launch)** | Hosted artifact built and launched at 800x600 with extract-and-run; Ctrl+Q and standard installed AppImage acceptance need a supported desktop window manager |
+| x86_64 AppImage | **Pass (artifact/launch/quit)** | Hosted artifact built and launched at 800x600 with extract-and-run; Ctrl+Q passed with Openbox; standard installed AppImage acceptance remains |
 | x86_64 `.deb` | **Pass (artifact/install)** | Current run artifact installed, inspected, launched with Ctrl+Q, and removed in disposable Ubuntu container |
 | Supported install/coexistence | **Partial** | Ubuntu package lifecycle passed; Flutter coexistence was not available to test |
-| Real disposable Linkding API | **Pass (Rust integration)** | Pinned 1.46.2 live test passed; native UI path remains unverified |
-| Secret Service unlocked CRUD | **Pass (adapter + rebuilt source)** | Production adapter create/read/delete passed on host KWallet; rebuilt native save/read/clear passed in disposable Ubuntu run |
+| Real disposable Linkding API | **Pass (Rust + native first page)** | Pinned 1.46.2 live test passed; exact candidate connected to the disposable server and rendered a seeded queue bookmark |
+| Secret Service unlocked CRUD | **Pass (exact candidate + adapter)** | Exact candidate saved/read/cleared through disposable gnome-keyring; production adapter create/read/delete also passed on host KWallet |
 | Missing/unavailable Secret Service | **Partial pass** | Native save failed closed with no plaintext fallback; full user-facing recovery needs a supported unlocked/locked setup |
 | Locked/wrong-auth Secret Service | **Blocked** | No safe isolated locked/wrong-auth scenario completed |
-| Native restart persistence and clear | **Pass (rebuilt source; candidate artifact gate pending)** | Rebuilt binary saved, survived restart, cleared durably, and reopened disconnected; current candidate includes the bridge fix but was not interactively credential-tested |
-| Menus/quit/window minimum | **Partial pass** | Native `Ctrl+Q` and 800x600 passed; all menu actions were not interactively exercised |
-| Browser open and native bookmark mutations | **Partial (rebuilt source)** | Native bookmark creation passed against disposable Linkding; browser opening and complete native workflow remain unverified |
+| Native restart persistence and clear | **Pass (exact candidate)** | Exact AppImage retained configured state after relaunch, cleared durably, and reopened disconnected without reconnecting |
+| Menus/quit/window minimum | **Partial pass** | Exact AppImage Ctrl+Q passed with Openbox and 800x600 passed; new/search/refresh/settings menu actions remain unverified |
+| Browser open and native bookmark mutations | **Blocked** | Seeded bookmark rendered in the exact candidate; browser opening and native mutations remain unverified |
 
 Q06 must remain open. The next run needs a supported Linux desktop with a
-working unlocked Secret Service collection (and a controllable locked/wrong
-auth state), then must exercise candidate `294a07d`—not an older artifact—for
-native save/restart/clear, browser, menu, and disposable Linkding UI gates.
+controllable locked Secret Service state, then must exercise candidate
+`294a07d`—not an older artifact—for browser opening, every required menu action,
+native mutations, and Flutter coexistence.
