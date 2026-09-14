@@ -51,14 +51,21 @@ describe('typed Tauri bridge', () => {
       'delete_bookmark',
       'open_external_url',
     ]);
+    expect(calls[1]?.args).toEqual({
+      input: { baseUrl: 'https://example.invalid', newToken: 'draft-token' },
+    });
     expect(calls[7]?.args).toEqual({
-      generation,
-      url: 'https://bookmark.invalid',
-      tagNames: ['tag'],
+      input: {
+        generation,
+        url: 'https://bookmark.invalid',
+        tagNames: ['tag'],
+      },
     });
     expect(calls[13]?.args).toEqual({
-      generation,
-      url: 'https://bookmark.invalid/article#part',
+      input: {
+        generation,
+        url: 'https://bookmark.invalid/article#part',
+      },
     });
   });
 

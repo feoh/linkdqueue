@@ -64,28 +64,28 @@ export function createTauriBridge(invoke: Invoke = tauriInvoke): LinkdqueueBridg
   return {
     getSettings: () => invokeCommand<Settings>(invoke, 'get_settings'),
     testConnection: (input) =>
-      invokeCommand<TestConnectionResult>(invoke, 'test_connection', input),
+      invokeCommand<TestConnectionResult>(invoke, 'test_connection', { input }),
     saveConnection: (input) =>
-      invokeCommand<SaveConnectionResult>(invoke, 'save_connection', input),
+      invokeCommand<SaveConnectionResult>(invoke, 'save_connection', { input }),
     clearConnection: (input) =>
-      invokeCommand<ClearConnectionResult>(invoke, 'clear_connection', input),
+      invokeCommand<ClearConnectionResult>(invoke, 'clear_connection', { input }),
     setDisplayPreferences: (input) =>
-      invokeCommand<Settings>(invoke, 'set_display_preferences', input),
+      invokeCommand<Settings>(invoke, 'set_display_preferences', { input }),
     listBookmarks: (input) =>
-      invokeCommand<CommandEnvelope<Page<Bookmark>>>(invoke, 'list_bookmarks', input),
-    listTags: (input) => invokeCommand<CommandEnvelope<Page<Tag>>>(invoke, 'list_tags', input),
+      invokeCommand<CommandEnvelope<Page<Bookmark>>>(invoke, 'list_bookmarks', { input }),
+    listTags: (input) => invokeCommand<CommandEnvelope<Page<Tag>>>(invoke, 'list_tags', { input }),
     createBookmark: (input) =>
-      invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'create_bookmark', input),
-    markRead: (input) => invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'mark_read', input),
+      invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'create_bookmark', { input }),
+    markRead: (input) => invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'mark_read', { input }),
     replaceBookmarkTags: (input) =>
-      invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'replace_bookmark_tags', input),
+      invokeCommand<CommandEnvelope<Bookmark>>(invoke, 'replace_bookmark_tags', { input }),
     archiveBookmark: (input) =>
-      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'archive_bookmark', input),
+      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'archive_bookmark', { input }),
     unarchiveBookmark: (input) =>
-      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'unarchive_bookmark', input),
+      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'unarchive_bookmark', { input }),
     deleteBookmark: (input) =>
-      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'delete_bookmark', input),
-    openExternalUrl: (input) => invokeCommand<void>(invoke, 'open_external_url', input),
+      invokeCommand<CommandEnvelope<ConfirmedMutation>>(invoke, 'delete_bookmark', { input }),
+    openExternalUrl: (input) => invokeCommand<void>(invoke, 'open_external_url', { input }),
   };
 }
 

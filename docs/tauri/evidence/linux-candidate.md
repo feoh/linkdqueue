@@ -1,7 +1,7 @@
 # Q06 Linux candidate and Secret Service evidence
 
 Status: **blocked for final acceptance; candidate and partial Linux gates
-passed**. This record covers immutable candidate `9f5578af677a82ef5a6649f5c03d264701ab31c1` and does not claim Linux release support. Native restart persistence, successful native credential save/clear, locked/wrong-auth stores, and a full interactive Linkding workflow remain unverified.
+passed**. This record covers immutable candidate `9f5578af677a82ef5a6649f5c03d264701ab31c1` and does not claim Linux release support. The post-candidate native IPC payload fix was rebuilt and exercised locally, but the immutable candidate has not yet been rerun with that fix. Locked/wrong-auth stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
 
 ## Candidate provenance
 
@@ -90,13 +90,56 @@ error page, and no preference file or plaintext token was created under the
 isolated XDG configuration directory. This is evidence for the unavailable
 store/error path, not a successful persistence test.
 
-The following required store scenarios were not completed:
+The following required scenarios were not completed against the immutable
+candidate:
 
-- unlocked native save/read across an actual application restart;
-- successful native clear followed by reopen/no reconnect;
-- intentionally locked store and wrong-auth behavior; and
-- native UI list/mutation/browser-open flow against the disposable Linkding
-  service (the Rust live test covers the HTTP layer only).
+- intentionally locked store and wrong-auth behavior;
+- native UI browser opening and complete menu coverage; and
+- Flutter coexistence on the same desktop.
+
+The rebuilt post-candidate source passed native save/read across an actual
+restart, successful clear followed by reopen/no reconnect, and native bookmark
+creation. Those results are recorded below but require a new immutable
+candidate run before they can satisfy the final gate.
+
+## Post-candidate native IPC fix and disposable Secret Service run
+
+The native bridge originally sent each typed command payload as the top-level
+Tauri argument object, while the Rust commands accept a named `input`
+argument. Browser tests did not expose this mismatch because their mock bridge
+bypasses Tauri serialization. `desktop/src/lib/api/bridge.ts` now sends
+`{ input }` for every typed command, and its bridge unit test asserts the
+nested payload. This was rebuilt from the working tree after candidate
+`9f5578af`; the existing immutable Actions artifacts were not relabeled or
+reused as a post-fix candidate.
+
+The following local run used the rebuilt release binary (not the old Actions
+artifact), a disposable Ubuntu 24.04 x86_64 container, Xvfb, a private
+`dbus-run-session`, and a freshly unlocked gnome-keyring Secret Service
+collection. The pinned disposable Linkding `1.46.2` server was exposed only
+on loopback at a temporary port; its temporary account and token were deleted
+with the environment.
+
+- `npm run test:unit -- --run src/lib/api/bridge.test.ts` — 2 tests passed.
+- `npm run tauri -- build --bundles deb --ci` — rebuilt the post-fix `.deb` and
+  release binary successfully. Local AppImage bundling still cannot complete
+  on this host because linuxdeploy rejects the host's RELR sections; this is
+  not used as AppImage candidate evidence.
+- Native onboarding through the rebuilt binary: HTTP consent, Test connection,
+  Save connection, and the connected Queue view passed against Linkding.
+- Native bookmark creation with URL/title/description/tag passed; the
+  disposable server reported the created bookmark. No token appeared in the
+  isolated preferences directory or application log.
+- Relaunch in the same isolated session showed `CONNECTED`, proving saved
+  native credential and display state survived an application restart.
+- Settings → Clear connection → confirm passed. The isolated Secret Service
+  lookup returned no entry, preferences contained `state: disconnected`, and
+  the next relaunch showed the unconfigured connection form without
+  reconnecting.
+
+This run materially verifies the previously missing unlocked save/restart/
+clear lifecycle for the rebuilt source, but it is not a final candidate gate
+until a new immutable workflow run contains the bridge fix.
 
 ## Gate result
 
@@ -107,12 +150,12 @@ The following required store scenarios were not completed:
 | x86_64 `.deb` | **Pass (artifact/install)** | Installed, inspected, launched, and removed in disposable Ubuntu container |
 | Supported install/coexistence | **Partial** | Ubuntu package lifecycle passed; Flutter coexistence was not available to test |
 | Real disposable Linkding API | **Pass (Rust integration)** | Pinned 1.46.2 live test passed; native UI path remains unverified |
-| Secret Service unlocked CRUD | **Pass (adapter only)** | Production adapter create/read/delete passed on host KWallet |
+| Secret Service unlocked CRUD | **Pass (adapter + rebuilt source)** | Production adapter create/read/delete passed on host KWallet; rebuilt native save/read/clear passed in disposable Ubuntu run |
 | Missing/unavailable Secret Service | **Partial pass** | Native save failed closed with no plaintext fallback; full user-facing recovery needs a supported unlocked/locked setup |
 | Locked/wrong-auth Secret Service | **Blocked** | No safe isolated locked/wrong-auth scenario completed |
-| Native restart persistence and clear | **Blocked** | Native save could not complete in disposable Ubuntu keyring setup |
+| Native restart persistence and clear | **Pass (rebuilt source; candidate rerun required)** | Rebuilt binary saved, survived restart, cleared durably, and reopened disconnected; immutable candidate predates the bridge fix |
 | Menus/quit/window minimum | **Partial pass** | Native `Ctrl+Q` and 800x600 passed; all menu actions were not interactively exercised |
-| Browser open and native bookmark mutations | **Blocked** | No native UI workflow completed |
+| Browser open and native bookmark mutations | **Partial (rebuilt source)** | Native bookmark creation passed against disposable Linkding; browser opening and complete native workflow remain unverified |
 
 Q06 must remain open. The next run needs a supported Linux desktop with a
 working unlocked Secret Service collection (and a controllable locked/wrong
