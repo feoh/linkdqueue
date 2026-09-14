@@ -1,20 +1,21 @@
 # Q06 Linux candidate and Secret Service evidence
 
 Status: **blocked for final acceptance; candidate and partial Linux gates
-passed**. This record covers immutable candidate `9f5578af677a82ef5a6649f5c03d264701ab31c1` and does not claim Linux release support. The post-candidate native IPC payload fix was rebuilt and exercised locally, but the immutable candidate has not yet been rerun with that fix. Locked/wrong-auth stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
+passed**. This record covers immutable candidate `294a07dbe0b56eff68a3643e411db6cd523c10ca` and does not claim Linux release support. The candidate includes the native IPC payload fix. Locked/wrong-auth stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
 
 ## Candidate provenance
 
-- GitHub Actions run: [34789342123](https://github.com/feoh/linkdqueue/actions/runs/34789342123)
-- Candidate commit: `9f5578af677a82ef5a6649f5c03d264701ab31c1`
-- Candidate manifest SHA-256: `addebdd3bebe6adaf72e254ec4bed47653e3ebb71e1095c85265e39ea0479210`
+- GitHub Actions run: [34794691403](https://github.com/feoh/linkdqueue/actions/runs/34794691403)
+- Candidate commit: `294a07dbe0b56eff68a3643e411db6cd523c10ca`
+- Candidate manifest SHA-256: `d2083fc34dabac036af1550a17eede91257c1c3fa4779264488cbd6883abc2dc`
 - Manifest toolchains: Node `24.15.0`, Rust `1.92.0`
 - Version: `2.0.0`
 - Signing: unsigned, non-public Actions artifacts only
-- Linux AppImage SHA-256: `78fd37d39fc792cab67561ed3060d94fea14ea4b60513eafbfa5bc36c4d290cd`
-- Linux `.deb` SHA-256: `943ed305fab197b9f1150d656c07b5752f41c12cc5a867c24599a9c46e423525`
+- Linux AppImage SHA-256: `7f46c020698ee2fb1489e8d3a4bf3cb646b6f2641aa4a0f166ba5c1d30e676a1`
+- Linux `.deb` SHA-256: `faf20bce61616ee6d2f28122d22ab4c056e5b9b357060ec9021e7772f3abf370`
 
-The downloaded Linux artifact checksum file passed `sha256sum -c`. The
+The downloaded Linux artifact checksum file passed `sha256sum -c`, and all
+21 downloaded manifest asset digests plus the manifest checksum matched. The
 manifest includes the Linux AppImage, `.deb`, both macOS architectures, and
 the Windows installer, all tied to the same immutable commit. The complete
 candidate workflow passed its validation, Linux, macOS arm64, macOS x86_64,
@@ -60,17 +61,20 @@ process environment and was not printed.
 
 ## Native package and launch checks
 
-- Installed the candidate `.deb` in the Ubuntu container with `dpkg -i`.
-  `dpkg-query` reported `linkdqueue-desktop 2.0.0 amd64`; the application
-  binary and desktop entry were present.
-- With the `.deb` installed, launched the candidate AppImage using its
-  supported `--appimage-extract-and-run` mode under Xvfb. The native window
-  reported `800x600`; `CmdOrCtrl+Q` equivalent `Ctrl+Q` exited cleanly with
-  return code 0.
-- Launched the installed `.deb` under the same Xvfb/DBus setup. The native
-  window reported `800x600`; `Ctrl+Q` exited cleanly with return code 0.
+- Downloaded the Linux artifacts from run `34794691403`; the per-platform
+  checksum file and manifest asset digests passed verification.
+- Installed the candidate `.deb` in an Ubuntu `24.04` x86_64 container with
+  `dpkg -i`. `dpkg-query` reported `linkdqueue-desktop 2.0.0 amd64`; the
+  application binary and desktop entry were present.
+- Launched the installed `.deb` under Xvfb and a private DBus session. The
+  native window opened and `Ctrl+Q` exited cleanly.
 - Removed the `.deb` with `dpkg -r linkdqueue-desktop`; package state and
   `/usr/bin/linkdqueue-desktop` were gone afterward.
+- Launched the candidate AppImage with its supported
+  `--appimage-extract-and-run` mode under Xvfb; the native window reported
+  `800x600`. Ctrl+Q could not be conclusively exercised because the disposable
+  Xvfb session has no window manager and Tauri's native accelerator did not
+  receive a real desktop focus event. This remains a native desktop gate.
 - The container had no Flutter installation, so package coexistence with an
   installed Flutter desktop app and preservation of its desktop entry were not
   proven. No Flutter or server data was touched.
@@ -97,21 +101,20 @@ candidate:
 - native UI browser opening and complete menu coverage; and
 - Flutter coexistence on the same desktop.
 
-The rebuilt post-candidate source passed native save/read across an actual
-restart, successful clear followed by reopen/no reconnect, and native bookmark
-creation. Those results are recorded below but require a new immutable
-candidate run before they can satisfy the final gate.
+The rebuilt source passed native save/read across an actual restart,
+successful clear followed by reopen/no reconnect, and native bookmark creation.
+Those results are recorded below, but the hosted candidate artifact was only
+validated through package launch and quit; its native credential lifecycle
+still requires a supported interactive Linux run.
 
-## Post-candidate native IPC fix and disposable Secret Service run
+## Native IPC fix and disposable Secret Service run
 
 The native bridge originally sent each typed command payload as the top-level
 Tauri argument object, while the Rust commands accept a named `input`
 argument. Browser tests did not expose this mismatch because their mock bridge
 bypasses Tauri serialization. `desktop/src/lib/api/bridge.ts` now sends
 `{ input }` for every typed command, and its bridge unit test asserts the
-nested payload. This was rebuilt from the working tree after candidate
-`9f5578af`; the existing immutable Actions artifacts were not relabeled or
-reused as a post-fix candidate.
+nested payload. Candidate run `34794691403` includes this fix.
 
 The following local run used the rebuilt release binary (not the old Actions
 artifact), a disposable Ubuntu 24.04 x86_64 container, Xvfb, a private
@@ -124,7 +127,8 @@ with the environment.
 - `npm run tauri -- build --bundles deb --ci` — rebuilt the post-fix `.deb` and
   release binary successfully. Local AppImage bundling still cannot complete
   on this host because linuxdeploy rejects the host's RELR sections; this is
-  not used as AppImage candidate evidence.
+  not used as AppImage candidate evidence. The hosted candidate workflow then
+  rebuilt both Linux artifacts from the immutable fix commit.
 - Native onboarding through the rebuilt binary: HTTP consent, Test connection,
   Save connection, and the connected Queue view passed against Linkding.
 - Native bookmark creation with URL/title/description/tag passed; the
@@ -137,27 +141,27 @@ with the environment.
   the next relaunch showed the unconfigured connection form without
   reconnecting.
 
-This run materially verifies the previously missing unlocked save/restart/
-clear lifecycle for the rebuilt source, but it is not a final candidate gate
-until a new immutable workflow run contains the bridge fix.
+This run materially verifies the unlocked save/restart/clear lifecycle for
+source that is now included in candidate `294a07d`, but the hosted artifact
+still needs the interactive credential and full workflow gates below.
 
 ## Gate result
 
 | Gate | Result | Evidence / residual risk |
 | --- | --- | --- |
-| Immutable candidate and manifest | **Pass** | Run `34789342123`; manifest and checksums tied to commit `9f5578a` |
-| x86_64 AppImage | **Pass (artifact)** | Ubuntu candidate built and launched with extract-and-run; standard installed AppImage acceptance still needs supported desktop confirmation |
-| x86_64 `.deb` | **Pass (artifact/install)** | Installed, inspected, launched, and removed in disposable Ubuntu container |
+| Immutable candidate and manifest | **Pass** | Run `34794691403`; manifest checksum and 21 asset digests tied to commit `294a07d` |
+| x86_64 AppImage | **Pass (artifact/launch)** | Hosted artifact built and launched at 800x600 with extract-and-run; Ctrl+Q and standard installed AppImage acceptance need a supported desktop window manager |
+| x86_64 `.deb` | **Pass (artifact/install)** | Current run artifact installed, inspected, launched with Ctrl+Q, and removed in disposable Ubuntu container |
 | Supported install/coexistence | **Partial** | Ubuntu package lifecycle passed; Flutter coexistence was not available to test |
 | Real disposable Linkding API | **Pass (Rust integration)** | Pinned 1.46.2 live test passed; native UI path remains unverified |
 | Secret Service unlocked CRUD | **Pass (adapter + rebuilt source)** | Production adapter create/read/delete passed on host KWallet; rebuilt native save/read/clear passed in disposable Ubuntu run |
 | Missing/unavailable Secret Service | **Partial pass** | Native save failed closed with no plaintext fallback; full user-facing recovery needs a supported unlocked/locked setup |
 | Locked/wrong-auth Secret Service | **Blocked** | No safe isolated locked/wrong-auth scenario completed |
-| Native restart persistence and clear | **Pass (rebuilt source; candidate rerun required)** | Rebuilt binary saved, survived restart, cleared durably, and reopened disconnected; immutable candidate predates the bridge fix |
+| Native restart persistence and clear | **Pass (rebuilt source; candidate artifact gate pending)** | Rebuilt binary saved, survived restart, cleared durably, and reopened disconnected; current candidate includes the bridge fix but was not interactively credential-tested |
 | Menus/quit/window minimum | **Partial pass** | Native `Ctrl+Q` and 800x600 passed; all menu actions were not interactively exercised |
 | Browser open and native bookmark mutations | **Partial (rebuilt source)** | Native bookmark creation passed against disposable Linkding; browser opening and complete native workflow remain unverified |
 
 Q06 must remain open. The next run needs a supported Linux desktop with a
 working unlocked Secret Service collection (and a controllable locked/wrong
-auth state), then must rerun the same candidate—not an older artifact—for
+auth state), then must exercise candidate `294a07d`—not an older artifact—for
 native save/restart/clear, browser, menu, and disposable Linkding UI gates.
