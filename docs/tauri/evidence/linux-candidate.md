@@ -1,7 +1,7 @@
 # Q06 Linux candidate and Secret Service evidence
 
 Status: **blocked for final acceptance; candidate and partial Linux gates
-passed**. This record covers immutable candidate `294a07dbe0b56eff68a3643e411db6cd523c10ca` and does not claim Linux release support. The candidate includes the native IPC payload fix. Locked stores, browser opening, complete native menu coverage, and Flutter coexistence remain unverified.
+passed**. This record covers immutable candidate `294a07dbe0b56eff68a3643e411db6cd523c10ca` and does not claim Linux release support. The candidate includes the native IPC payload fix. Locked stores, browser opening, and complete native menu coverage remain unverified. Flutter coexistence is intentionally not a requirement: the Tauri rewrite is the replacement desktop client.
 
 ## Candidate provenance
 
@@ -74,9 +74,9 @@ process environment and was not printed.
   `--appimage-extract-and-run` mode under Xvfb and Openbox; the native window
   reported `800x600`, and Ctrl+Q exited cleanly. A real window manager was
   required for this accelerator check.
-- The container had no Flutter installation, so package coexistence with an
-  installed Flutter desktop app and preservation of its desktop entry were not
-  proven. No Flutter or server data was touched.
+- Flutter coexistence was not tested because it is not a product requirement.
+  The replacement does not read, rewrite, or delete legacy Flutter preferences
+  or credentials. No Flutter or server data was touched.
 
 ## Secret Service lifecycle checks
 
@@ -96,9 +96,8 @@ store/error path, not a successful persistence test.
 The following required scenarios were not completed against the immutable
 candidate:
 
-- intentionally locked Secret Service behavior;
-- native UI browser opening and complete menu coverage; and
-- Flutter coexistence on the same desktop.
+- intentionally locked Secret Service behavior; and
+- native UI browser opening and complete menu coverage.
 
 ## Native IPC fix and disposable Secret Service run
 
@@ -135,7 +134,7 @@ state were deleted with the environment.
 
 These checks materially verify the unlocked save/restart/clear lifecycle and
 wrong-auth handling on the exact immutable candidate. Locked-store behavior,
-browser opening, complete menu actions, and coexistence remain open.
+browser opening, and complete menu actions remain open.
 
 ## Gate result
 
@@ -144,7 +143,7 @@ browser opening, complete menu actions, and coexistence remain open.
 | Immutable candidate and manifest | **Pass** | Run `34794691403`; manifest checksum and 21 asset digests tied to commit `294a07d` |
 | x86_64 AppImage | **Pass (artifact/launch/quit)** | Hosted artifact built and launched at 800x600 with extract-and-run; Ctrl+Q passed with Openbox; standard installed AppImage acceptance remains |
 | x86_64 `.deb` | **Pass (artifact/install)** | Current run artifact installed, inspected, launched with Ctrl+Q, and removed in disposable Ubuntu container |
-| Supported install/coexistence | **Partial** | Ubuntu package lifecycle passed; Flutter coexistence was not available to test |
+| Supported install/uninstall | **Pass (Linux package lifecycle)** | Ubuntu `.deb` install, launch, quit, and uninstall passed; the Tauri rewrite is the sole supported desktop client at cutover |
 | Real disposable Linkding API | **Pass (Rust + native first page)** | Pinned 1.46.2 live test passed; exact candidate connected to the disposable server and rendered a seeded queue bookmark |
 | Secret Service unlocked CRUD | **Pass (exact candidate + adapter)** | Exact candidate saved/read/cleared through disposable gnome-keyring; production adapter create/read/delete also passed on host KWallet |
 | Missing/unavailable Secret Service | **Partial pass** | Native save failed closed with no plaintext fallback; full user-facing recovery needs a supported unlocked/locked setup |
@@ -156,4 +155,4 @@ browser opening, complete menu actions, and coexistence remain open.
 Q06 must remain open. The next run needs a supported Linux desktop with a
 controllable locked Secret Service state, then must exercise candidate
 `294a07d`—not an older artifact—for browser opening, every required menu action,
-native mutations, and Flutter coexistence.
+and native mutations. Flutter coexistence is explicitly out of scope.

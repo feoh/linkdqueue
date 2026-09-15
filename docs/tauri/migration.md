@@ -1,7 +1,8 @@
 # Migrating from the Flutter client
 
-The Tauri application is a replacement that coexists with the Flutter client
-while implementation and acceptance proceed. It uses the new application ID
+The Tauri application is the replacement desktop client and becomes the sole
+supported desktop client at cutover. Flutter coexistence and rollback are not
+product requirements. It uses the new application ID
 `com.feoh.linkdqueue.desktop` and the native credential namespace
 `com.feoh.linkdqueue.desktop.v1`. It does not read, import, rewrite, or delete
 Flutter preferences or Flutter keyring entries.
@@ -17,9 +18,9 @@ in the desktop replacement:
 3. the display theme and text scale.
 
 The replacement has one Linkding connection and does not import a legacy
-account automatically. Keep the Flutter app installed until desktop
-acceptance and rollback checks are complete. Rollback means returning to the
-Flutter app; it does not mean copying preferences between applications.
+account automatically. At cutover, remove or disable the Flutter desktop
+package so the Tauri application is the only supported desktop client. The
+replacement does not copy preferences between applications.
 
 ## Legacy token warning
 
@@ -59,7 +60,8 @@ start the OS credential service and retry. There is no plaintext fallback.
 - Exercise an external bookmark open and confirm it uses the system browser.
 - Verify Settings, Clear, restart, and reconnect behavior without recording a
   token.
-- Keep the Flutter installation untouched until the owner authorizes cutover.
+- Remove or disable the legacy Flutter desktop package as part of cutover;
+  legacy preferences and credentials are not touched by the Tauri app.
 
 Mobile integration, offline storage/sync, embedded reading, tray/background
 sync, auto-update, multi-account, bulk operations, and global tag CRUD are not

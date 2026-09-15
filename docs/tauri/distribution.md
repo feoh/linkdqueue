@@ -20,8 +20,9 @@ The owner confirmed in the workflow session on 2026-09-11:
 
 These are product decisions, not evidence that each minimum OS or packaging
 job has been validated. OS build and native smoke evidence are release gates.
-The package identifier must not reuse the Flutter app's identity while both
-applications coexist.
+The package identifier remains distinct from the legacy Flutter identity so
+that the replacement cannot accidentally consume or overwrite legacy state;
+the cutover process removes or disables the old desktop package separately.
 
 ## Artifact matrix
 
@@ -58,12 +59,15 @@ Until that final gate is recorded, release notes must warn that an artifact is
 unsigned and users must verify its source. No certificates, keys, tags, or
 GitHub Releases are created by this task.
 
-## Coexistence and migration
+## Desktop replacement and migration
 
-The Tauri app uses the isolated application ID and the credential namespace in
-[`security.md`](security.md). It does not read, import, rewrite, or delete the
-Flutter SharedPreferences file or Flutter keyring entry. Existing bookmarks
-remain in Linkding and need no database migration.
+The Tauri app is the sole supported desktop release after cutover. The release
+process must remove or disable the legacy Flutter desktop package rather than
+requiring both applications to coexist. The Tauri app uses the isolated
+application ID and credential namespace in [`security.md`](security.md). It
+does not read, import, rewrite, or delete the Flutter SharedPreferences file or
+Flutter keyring entry. Existing bookmarks remain in Linkding and need no
+database migration.
 
 On first Tauri launch, setup is explicit:
 
@@ -103,8 +107,8 @@ create any tag while that workflow would publish the wrong artifacts.
 Before the first release:
 
 1. implement and validate the Tauri build matrix;
-2. update the release workflow as a whole-project pipeline, preserving Flutter
-   coexistence until cutover acceptance;
+2. update the release workflow so the Tauri replacement is the sole supported
+   desktop release and replaces the Flutter desktop release behavior;
 3. verify that the final version is `2.0.0` in every shipped manifest;
 4. run all PR, contract, browser/accessibility, and OS/native gates;
 5. obtain explicit owner approval to publish.
@@ -127,7 +131,8 @@ The following are intentionally open until delivery evidence exists:
 - signing/notarization availability or an explicit owner-approved unsigned
   public-release policy is recorded;
 - the whole-project pipeline replaces the current Flutter-only release
-  behavior without publishing a partial release.
+  behavior with the Tauri desktop replacement without publishing a partial
+  release.
 
 No item above is treated as passed merely because the platform or a GitHub
 runner is listed in documentation.
